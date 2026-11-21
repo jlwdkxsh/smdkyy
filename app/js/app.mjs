@@ -234,7 +234,7 @@ function setScore(value) {
   const score = clampScore(value);
   state.sheet.score = score;
   const thumb = appEl.querySelector('.slider__thumb');
-  if (thumb) thumb.style.top = `${Math.round(((10 - score) / 9) * 254)}px`;
+  if (thumb) thumb.style.top = `calc(${((10 - score) / 9).toFixed(4)} * (100% - 46px))`;
   const face = M.levelImage(state.data, score);
   const faceHtml = face ? `<img class="face-img" src="${face}" alt="">` : M.DEFAULT_FACES[score];
   appEl.querySelectorAll('.slider__thumb, .sheet__face').forEach((node) => {

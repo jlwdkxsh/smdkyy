@@ -184,15 +184,15 @@ test('记录表单：默认 5 分、身体、无时间输入、10 色渐变、�
   assert.equal((html.match(/#[0-9A-F]{6}/g) || []).length >= 10, true);
   assert.match(html, /maxlength="500"/);
   assert.doesNotMatch(html, /type="time"/);
-  // 滑块位置：分数 5 → (10-5)/9*254 ≈ 141
-  assert.match(html, /class="slider__thumb" style="top:141px"/);
+  // 滑块位置：分数 5 → (10-5)/9 ≈ 0.5556，用百分比定位随轨道高度自适应
+  assert.match(html, /class="slider__thumb" style="top:calc\(0\.5556 \* \(100% - 46px\)\)"/);
 });
 
 test('记录表单：分数 10 在最顶、分数 1 在最底', () => {
   const top = renderRecordSheet(stateWith({ sheet: { kind: 'record', mode: 'create', type: 'body', score: 10, note: '' } }));
-  assert.match(top, /class="slider__thumb" style="top:0px"/);
+  assert.match(top, /class="slider__thumb" style="top:calc\(0\.0000 \* \(100% - 46px\)\)"/);
   const bottom = renderRecordSheet(stateWith({ sheet: { kind: 'record', mode: 'create', type: 'body', score: 1, note: '' } }));
-  assert.match(bottom, /class="slider__thumb" style="top:254px"/);
+  assert.match(bottom, /class="slider__thumb" style="top:calc\(1\.0000 \* \(100% - 46px\)\)"/);
 });
 
 test('记录表单：补记时带日期与时间，默认时间可改', () => {

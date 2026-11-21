@@ -1483,6 +1483,73 @@ textarea {
   flex: 1;
 }
 
+@media (max-width: 520px) {
+  .app-shell {
+    padding: 0 14px;
+  }
+
+  .page-head {
+    padding: 24px 48px 4px 0;
+  }
+
+  .page-head--today {
+    padding-right: 0;
+  }
+
+  .type-nav {
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .type-nav__item {
+    padding: 10px 4px 8px;
+  }
+
+  .chart-block {
+    padding: 10px 8px 4px;
+  }
+
+  .card {
+    padding: 10px;
+  }
+
+  .calendar {
+    padding: 10px 8px 4px;
+  }
+
+  .day {
+    border-radius: 8px;
+  }
+
+  .day-detail {
+    padding: 12px;
+  }
+
+  .settings-block {
+    padding: 12px;
+  }
+
+  .sheet {
+    padding: 8px 14px calc(16px + env(safe-area-inset-bottom));
+  }
+
+  .slider-rail,
+  .slider,
+  .slider__track,
+  .slider__ticks,
+  .slider__scale {
+    height: 240px;
+  }
+
+  .sheet__score {
+    gap: 18px;
+  }
+
+  .today-add {
+    padding: 9px 14px;
+  }
+}
+
 @media (max-width: 420px) {
   .sheet__score {
     gap: 22px;

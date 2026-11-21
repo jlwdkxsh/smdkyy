@@ -162,7 +162,7 @@ export function renderRecordSheet(state) {
   const data = state.data;
   const title = sheet.mode === 'edit' ? '编辑记录' : sheet.mode === 'backfill' ? '补记记录' : '添加记录';
   const color = M.levelColor(data, sheet.score);
-  const thumbTop = Math.round(((10 - sheet.score) / 9) * 254);
+  const thumbOffset = ((10 - sheet.score) / 9).toFixed(4);
 
   const typeTabs = M.TYPES.map(
     (type) =>
@@ -196,7 +196,7 @@ export function renderRecordSheet(state) {
       <div class="slider-rail">
         <div class="slider" data-slider tabindex="0" role="slider" aria-label="分数" aria-valuemin="1" aria-valuemax="10" aria-valuenow="${sheet.score}">
           <div class="slider__track" style="background:${scoreGradient(data)}"></div>
-          <div class="slider__thumb" style="top:${thumbTop}px">${faceHtml(data, sheet.score)}</div>
+          <div class="slider__thumb" style="top:calc(${thumbOffset} * (100% - 46px))">${faceHtml(data, sheet.score)}</div>
           <div class="slider__ticks" aria-hidden="true">${ticks}</div>
         </div>
         <div class="slider__scale" aria-hidden="true"><span>10</span><span>1</span></div>
