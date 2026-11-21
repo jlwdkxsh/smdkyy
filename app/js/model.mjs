@@ -34,6 +34,21 @@ export const LIMITS = {
   note: 500,
   eventText: 200,
   imageDataUrl: 200000,
+  backgroundDataUrl: 700000,
+};
+
+export const DEFAULT_BACKGROUND = {
+  mode: 'solid',
+  color: '#F7F6F3',
+  from: '#F3F2EE',
+  to: '#E8E6E1',
+  angle: 'vertical',
+  image: null,
+  scrim: 30,
+};
+
+export const DEFAULT_APPEARANCE = {
+  surfaceAlpha: 100,
 };
 
 export const DATETIME_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
@@ -164,10 +179,26 @@ export function createEmptyData(now = new Date()) {
         color: DEFAULT_COLORS[index],
         image: null,
       })),
+      background: { ...DEFAULT_BACKGROUND },
+      appearance: { ...DEFAULT_APPEARANCE },
     },
     records: [],
     events: [],
     updatedAt: toLocalDateTime(now),
+  };
+}
+
+/** 补全旧数据里缺失的外观字段（纯函数，不改原对象） */
+export function normalizeData(data) {
+  const settings = data.settings || {};
+  return {
+    ...data,
+    settings: {
+      ...settings,
+      levels: settings.levels || [],
+      background: { ...DEFAULT_BACKGROUND, ...(settings.background || {}) },
+      appearance: { ...DEFAULT_APPEARANCE, ...(settings.appearance || {}) },
+    },
   };
 }
 
@@ -553,6 +584,46 @@ export function validateData(data) {
           break;
         }
       }
+    }
+  }
+
+  const background = data.settings && data.settings.background;
+  if (background !== undefined) {
+    if (!background || typeof background !== 'object' || !['solid', 'gradient', 'image'].includes(background.mode)) {
+      errors.push('外观设置损坏：背景模式不正确');
+    } else {
+      for (const key of ['color', 'from', 'to']) {
+        if (background[key] !== undefined && !COLOR_RE.test(String(background[key]))) {
+          errors.push('外观设置损坏：颜色格式不正确');
+          break;
+        }
+      }
+      if (background.angle !== undefined && !['vertical', 'diagonal'].includes(background.angle)) {
+        errors.push('外观设置损坏：渐变方向不正确');
+      }
+      if (
+        background.scrim !== undefined &&
+        (!Number.isInteger(background.scrim) || background.scrim < 0 || background.scrim > 100)
+      ) {
+        errors.push('外观设置损坏：遮罩强度不正确');
+      }
+      if (background.image !== null && background.image !== undefined) {
+        if (
+          typeof background.image !== 'string' ||
+          !IMAGE_RE.test(background.image) ||
+          background.image.length > LIMITS.backgroundDataUrl
+        ) {
+          errors.push('外观设置损坏：背景图格式不正确');
+        }
+      }
+    }
+  }
+
+  const appearance = data.settings && data.settings.appearance;
+  if (appearance !== undefined) {
+    const alpha = appearance && appearance.surfaceAlpha;
+    if (alpha !== undefined && (!Number.isInteger(alpha) || alpha < 0 || alpha > 100)) {
+      errors.push('外观设置损坏：透明度不正确');
     }
   }
 

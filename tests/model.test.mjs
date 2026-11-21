@@ -277,6 +277,68 @@ test('monthMatrix：42 格、从周日起、标记本月与今天', () => {
   assert.equal(cells.filter((cell) => !cell.inMonth).length > 0, true);
 });
 
+test('createEmptyData：包含默认外观设置', () => {
+  const data = baseData();
+  assert.deepEqual(data.settings.background, M.DEFAULT_BACKGROUND);
+  assert.deepEqual(data.settings.appearance, M.DEFAULT_APPEARANCE);
+  assert.equal(data.settings.background.mode, 'solid');
+  assert.equal(data.settings.background.scrim, 30);
+  assert.equal(data.settings.appearance.surfaceAlpha, 100);
+});
+
+test('normalizeData：补全旧数据里缺失的外观字段', () => {
+  const old = baseData();
+  delete old.settings.background;
+  delete old.settings.appearance;
+  const normalized = M.normalizeData(old);
+  assert.deepEqual(normalized.settings.background, M.DEFAULT_BACKGROUND);
+  assert.deepEqual(normalized.settings.appearance, M.DEFAULT_APPEARANCE);
+  assert.equal(old.settings.background, undefined, '不修改原对象');
+
+  const custom = baseData();
+  custom.settings.background = { mode: 'image', image: null };
+  const merged = M.normalizeData(custom);
+  assert.equal(merged.settings.background.mode, 'image');
+  assert.equal(merged.settings.background.color, M.DEFAULT_BACKGROUND.color);
+});
+
+test('validateData：外观设置校验', () => {
+  const good = baseData();
+  good.settings.background = {
+    ...M.DEFAULT_BACKGROUND,
+    mode: 'gradient',
+    from: '#112233',
+    to: '#445566',
+    angle: 'diagonal',
+  };
+  assert.deepEqual(M.validateData(good), []);
+
+  const badMode = baseData();
+  badMode.settings.background = { ...M.DEFAULT_BACKGROUND, mode: 'video' };
+  assert.match(M.validateData(badMode).join(), /背景模式/);
+
+  const badColor = baseData();
+  badColor.settings.background = { ...M.DEFAULT_BACKGROUND, color: 'blue' };
+  assert.match(M.validateData(badColor).join(), /颜色/);
+
+  const badScrim = baseData();
+  badScrim.settings.background = { ...M.DEFAULT_BACKGROUND, scrim: 130 };
+  assert.match(M.validateData(badScrim).join(), /遮罩/);
+
+  const badImage = baseData();
+  badImage.settings.background = { ...M.DEFAULT_BACKGROUND, mode: 'image', image: 'http://example.com/a.jpg' };
+  assert.match(M.validateData(badImage).join(), /背景图/);
+
+  const badAlpha = baseData();
+  badAlpha.settings.appearance = { surfaceAlpha: 120 };
+  assert.match(M.validateData(badAlpha).join(), /透明度/);
+
+  const oldData = baseData();
+  delete oldData.settings.background;
+  delete oldData.settings.appearance;
+  assert.deepEqual(M.validateData(oldData), [], '旧数据没有外观字段也能通过');
+});
+
 test('validateData：接受空数据，拒绝坏版本/坏档位/坏记录', () => {
   assert.deepEqual(M.validateData(baseData()), []);
   assert.match(M.validateData({ ...baseData(), version: 99 }).join(), /版本/);

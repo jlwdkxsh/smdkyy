@@ -11,6 +11,9 @@
   --nav-h: 56px;
   --radius-card: 16px;
   --radius-btn: 12px;
+  --surface-alpha: 1;
+  --scrim: 0;
+  --surface: rgb(255 255 255 / var(--surface-alpha));
 }
 
 * {
@@ -24,13 +27,31 @@ body {
 }
 
 body {
-  background: var(--bg);
+  background: transparent;
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 15px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   padding-bottom: calc(var(--nav-h) + 28px);
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: var(--bg);
+}
+
+.backdrop__scrim {
+  position: absolute;
+  inset: 0;
+  background: rgb(255 255 255 / var(--scrim));
+}
+
+#app {
+  position: relative;
+  z-index: 1;
 }
 
 button,
@@ -1119,6 +1140,111 @@ textarea {
 .boot-error p {
   color: var(--muted);
   font-size: 14px;
+}
+
+/* ---------------------------------------------------------------- 设置：外观 */
+
+.bg-preview {
+  height: 96px;
+  margin: 4px 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+}
+
+.segmented {
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  background: #f3f2ee;
+  border-radius: 12px;
+}
+
+.segmented__item {
+  flex: 1;
+  padding: 8px 0;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.segmented__item.is-active {
+  background: #fff;
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.bg-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-top: 12px;
+}
+
+.color-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.color-field input[type="color"] {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.color-field input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.color-field input[type="color"]::-webkit-color-swatch {
+  border: 0;
+  border-radius: 50%;
+}
+
+.color-field select {
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  font-size: 13px;
+}
+
+.bg-image-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.bg-image-thumb {
+  width: 64px;
+  height: 64px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f3f2ee center / cover no-repeat;
+}
+
+.bg-image-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bg-image-actions .setting-row__btn {
+  margin-left: 0;
 }
 
 /* ---------------------------------------------------------------- 设置 */

@@ -407,6 +407,62 @@ export function renderListPage(state) {
 </main>`;
 }
 
+/** 把背景设置转成 CSS background 值（纯函数，便于测试） */
+export function backgroundCss(background) {
+  const bg = { ...M.DEFAULT_BACKGROUND, ...(background || {}) };
+  if (bg.mode === 'gradient') {
+    const angle = bg.angle === 'diagonal' ? '135deg' : '180deg';
+    return `linear-gradient(${angle}, ${bg.from}, ${bg.to})`;
+  }
+  if (bg.mode === 'image') {
+    return bg.image ? `url(${bg.image}) center / cover no-repeat, ${bg.color}` : bg.color;
+  }
+  return bg.color;
+}
+
+function renderAppearanceBlock(state) {
+  const bg = { ...M.DEFAULT_BACKGROUND, ...((state.data.settings && state.data.settings.background) || {}) };
+
+  const modes = [
+    ['solid', '纯色'],
+    ['gradient', '渐变'],
+    ['image', '图片'],
+  ]
+    .map(
+      ([key, label]) =>
+        `<button class="segmented__item${bg.mode === key ? ' is-active' : ''}" role="tab" aria-selected="${bg.mode === key}" data-action="bg-mode" data-mode="${key}">${label}</button>`,
+    )
+    .join('');
+
+  let fields = '';
+  if (bg.mode === 'solid') {
+    fields = `<label class="color-field"><span>背景颜色</span><input type="color" value="${esc(bg.color)}" data-bg-color="color"></label>`;
+  } else if (bg.mode === 'gradient') {
+    fields = `<label class="color-field"><span>上方颜色</span><input type="color" value="${esc(bg.from)}" data-bg-color="from"></label>
+      <label class="color-field"><span>下方颜色</span><input type="color" value="${esc(bg.to)}" data-bg-color="to"></label>
+      <label class="color-field"><span>方向</span><select data-bg-angle>
+        <option value="vertical"${bg.angle === 'vertical' ? ' selected' : ''}>上下</option>
+        <option value="diagonal"${bg.angle === 'diagonal' ? ' selected' : ''}>斜角</option>
+      </select></label>`;
+  } else {
+    fields = `<div class="bg-image-row">
+      <span class="bg-image-thumb"${bg.image ? ` style="background:url(${esc(bg.image)}) center / cover"` : ''}></span>
+      <div class="bg-image-actions">
+        <button class="setting-row__btn" data-action="bg-image">选择图片</button>
+        ${bg.image ? '<button class="setting-row__btn" data-action="bg-clear">清除图片</button>' : ''}
+      </div>
+    </div>`;
+  }
+
+  return `<section class="settings-block">
+    <h2 class="section-title">外观</h2>
+    <div class="bg-preview" style="background:${backgroundCss(bg)}"></div>
+    <div class="segmented" role="tablist" aria-label="背景类型">${modes}</div>
+    <div class="bg-fields">${fields}</div>
+    <input type="file" accept="image/*" data-file="background" hidden>
+  </section>`;
+}
+
 // ---------------------------------------------------------------- 设置页
 
 export function renderSettingsPage(state) {
@@ -433,6 +489,7 @@ export function renderSettingsPage(state) {
     <button class="icon-btn" data-action="close-settings" aria-label="返回">←</button>
     <h1 class="page-title">设置</h1>
   </header>
+  ${renderAppearanceBlock(state)}
   <section class="settings-block">
     <h2 class="section-title">分数 · 表情 · 颜色</h2>
     <ul class="setting-list">${rows}</ul>

@@ -4,7 +4,7 @@ import { mkdtemp, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import * as M from '../app/js/model.mjs';
-import { renderApp, renderSettingsPage, renderCropDialog } from '../app/js/view.mjs';
+import { renderApp, renderSettingsPage, renderCropDialog, backgroundCss } from '../app/js/view.mjs';
 import { startServer } from '../server.mjs';
 
 const NOW = new Date(2026, 10, 21, 19, 30);
@@ -87,6 +87,67 @@ test('导入确认框：说明覆盖范围，提供导入/取消', () => {
   assert.match(html, /data-action="cancel-import"/);
   assert.match(html, /覆盖现在所有记录/);
   assert.doesNotMatch(html, /data-action="confirm-delete"/);
+});
+
+test('背景 CSS：纯色 / 渐变 / 图片 三种模式', () => {
+  assert.equal(backgroundCss({ mode: 'solid', color: '#123456' }), '#123456');
+  assert.equal(
+    backgroundCss({ mode: 'gradient', from: '#111111', to: '#222222', angle: 'vertical' }),
+    'linear-gradient(180deg, #111111, #222222)',
+  );
+  assert.equal(
+    backgroundCss({ mode: 'gradient', from: '#111111', to: '#222222', angle: 'diagonal' }),
+    'linear-gradient(135deg, #111111, #222222)',
+  );
+  assert.equal(
+    backgroundCss({ mode: 'image', image: 'data:image/jpeg;base64,AAAA', color: '#F7F6F3' }),
+    'url(data:image/jpeg;base64,AAAA) center / cover no-repeat, #F7F6F3',
+  );
+  assert.equal(backgroundCss({ mode: 'image', image: null, color: '#ABCDEF' }), '#ABCDEF');
+  assert.equal(backgroundCss(), '#F7F6F3');
+  assert.equal(backgroundCss({}), '#F7F6F3');
+});
+
+test('设置页：外观块默认纯色，三种背景模式可选', () => {
+  const html = renderSettingsPage(stateWith());
+  assert.match(html, /<h2 class="section-title">外观<\/h2>/);
+  assert.match(html, /class="bg-preview"/);
+  assert.match(html, /class="segmented__item is-active" role="tab" aria-selected="true" data-action="bg-mode" data-mode="solid"/);
+  assert.match(html, /data-action="bg-mode" data-mode="gradient"/);
+  assert.match(html, /data-action="bg-mode" data-mode="image"/);
+  assert.match(html, /data-bg-color="color"/);
+  assert.match(html, /data-file="background"/);
+  assert.match(html, /background:#F7F6F3/);
+});
+
+test('设置页：渐变模式显示两个颜色与方向', () => {
+  const data = M.createEmptyData(NOW);
+  data.settings.background = { ...M.DEFAULT_BACKGROUND, mode: 'gradient' };
+  const html = renderSettingsPage(stateWith({ data }));
+  assert.match(html, /data-bg-color="from"/);
+  assert.match(html, /data-bg-color="to"/);
+  assert.match(html, /data-bg-angle/);
+  assert.match(html, />上下</);
+  assert.match(html, /linear-gradient\(180deg/);
+});
+
+test('设置页：图片模式显示选择图片与清除', () => {
+  const empty = M.createEmptyData(NOW);
+  empty.settings.background = { ...M.DEFAULT_BACKGROUND, mode: 'image', image: null };
+  const emptyHtml = renderSettingsPage(stateWith({ data: empty }));
+  assert.match(emptyHtml, /data-action="bg-image">选择图片/);
+  assert.doesNotMatch(emptyHtml, /data-action="bg-clear"/);
+
+  const withImage = M.createEmptyData(NOW);
+  withImage.settings.background = {
+    ...M.DEFAULT_BACKGROUND,
+    mode: 'image',
+    image: 'data:image/jpeg;base64,AAAA',
+  };
+  const html = renderSettingsPage(stateWith({ data: withImage }));
+  assert.match(html, /data-action="bg-image"/);
+  assert.match(html, /data-action="bg-clear">清除图片/);
+  assert.match(html, /class="bg-image-thumb" style="background:url\(data:image\/jpeg;base64,AAAA\)/);
 });
 
 test('GET /api/info：返回数据文件位置', async () => {

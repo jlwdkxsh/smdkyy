@@ -2,7 +2,7 @@
 // 纯计算部分导出为函数，便于在 Node 里做单元测试；DOM 相关代码只在浏览器中执行。
 
 import * as M from './model.mjs';
-import { renderApp } from './view.mjs';
+import { renderApp, backgroundCss } from './view.mjs';
 
 const hasDom = typeof document !== 'undefined';
 const appEl = hasDom ? document.getElementById('app') : null;
@@ -85,6 +85,28 @@ function render() {
   if (slider) attachSlider(slider);
   attachDayCells();
   if (state.crop) setupCropCanvas();
+  applyBackground();
+}
+
+function applyBackground() {
+  const backdrop = document.getElementById('backdrop');
+  if (!backdrop || !state.data) return;
+  const bg = { ...M.DEFAULT_BACKGROUND, ...(state.data.settings.background || {}) };
+  backdrop.style.background = backgroundCss(bg);
+  const scrim = bg.mode === 'image' ? Number(bg.scrim) || 0 : 0;
+  document.documentElement.style.setProperty('--scrim', String(scrim / 100));
+}
+
+async function updateBackground(patch) {
+  const next = structuredClone(state.data);
+  next.settings.background = {
+    ...M.DEFAULT_BACKGROUND,
+    ...(next.settings.background || {}),
+    ...patch,
+  };
+  next.updatedAt = M.toLocalDateTime(new Date());
+  const ok = await persist(next);
+  if (ok) render();
 }
 
 function nowClock() {
@@ -391,6 +413,51 @@ function attachDayCells() {
   });
 }
 
+// ---------------------------------------------------------------- 设置：背景图
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('图片加载失败'));
+    image.src = src;
+  });
+}
+
+/** 把背景图压到长边 1280 以内，整体不超过限制 */
+async function compressBackground(file) {
+  const src = await readFileAsDataUrl(file);
+  const image = await loadImage(src);
+  const longest = Math.max(image.width, image.height);
+  for (const target of [1280, 1024, 800]) {
+    const scale = Math.min(1, target / longest);
+    const width = Math.max(1, Math.round(image.width * scale));
+    const height = Math.max(1, Math.round(image.height * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    canvas.getContext('2d').drawImage(image, 0, 0, width, height);
+    for (const quality of [0.82, 0.7, 0.55]) {
+      const url = canvas.toDataURL('image/jpeg', quality);
+      if (url.length <= M.LIMITS.backgroundDataUrl) return url;
+    }
+  }
+  return null;
+}
+
+async function setBackgroundImage(file) {
+  try {
+    const image = await compressBackground(file);
+    if (!image) {
+      showToast('这张图压完还是太大，换一张试试', true);
+      return;
+    }
+    await updateBackground({ image, mode: 'image' });
+  } catch (error) {
+    showToast(error.message, true);
+  }
+}
+
 // ---------------------------------------------------------------- 设置：颜色与表情图
 
 let cropImage = null;
@@ -539,6 +606,11 @@ async function handleFileInput(input) {
 
   if (input.dataset.file === 'import') {
     await importFile(file);
+    return;
+  }
+
+  if (input.dataset.file === 'background') {
+    await setBackgroundImage(file);
     return;
   }
 
@@ -747,6 +819,17 @@ function handleAction(action, target) {
       state.pendingImport = null;
       render();
       break;
+    case 'bg-mode':
+      updateBackground({ mode: target.dataset.mode });
+      break;
+    case 'bg-image': {
+      const input = appEl.querySelector('[data-file="background"]');
+      if (input) input.click();
+      break;
+    }
+    case 'bg-clear':
+      updateBackground({ image: null });
+      break;
     default:
       break;
   }
@@ -792,6 +875,16 @@ function bindEvents() {
       updateLevelColor(Number(colorInput.dataset.color), colorInput.value);
       return;
     }
+    const bgColor = event.target.closest('[data-bg-color]');
+    if (bgColor) {
+      updateBackground({ [bgColor.dataset.bgColor]: bgColor.value });
+      return;
+    }
+    const bgAngle = event.target.closest('[data-bg-angle]');
+    if (bgAngle) {
+      updateBackground({ angle: bgAngle.value });
+      return;
+    }
     const fileInput = event.target.closest('[data-file]');
     if (fileInput) handleFileInput(fileInput);
   });
@@ -803,7 +896,7 @@ async function boot() {
   try {
     const response = await fetch('/api/data');
     if (!response.ok) throw new Error(`读取本地数据失败（${response.status}）`);
-    state.data = await response.json();
+    state.data = M.normalizeData(await response.json());
     state.info = await fetch('/api/info')
       .then((info) => (info.ok ? info.json() : null))
       .catch(() => null);
