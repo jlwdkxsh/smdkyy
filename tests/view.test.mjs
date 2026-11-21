@@ -250,10 +250,17 @@ test('卡片菜单与删除确认框', () => {
   assert.match(dialog, /删除后不能恢复/);
 });
 
-test('设置入口：普通页面有齿轮，设置页隐藏底部导航并带返回', () => {
-  const today = renderApp(stateWith());
-  assert.match(today, /data-action="open-settings"/);
+test('设置入口：只在日历页出现齿轮，设置页隐藏底部导航并带返回', () => {
+  const today = renderApp(stateWith({ tab: 'today' }));
+  assert.doesNotMatch(today, /data-action="open-settings"/);
   assert.match(today, /<nav class="nav"/);
+
+  const list = renderApp(stateWith({ tab: 'list' }));
+  assert.doesNotMatch(list, /data-action="open-settings"/);
+
+  const calendar = renderApp(stateWith({ tab: 'calendar' }));
+  assert.match(calendar, /data-action="open-settings"/);
+  assert.match(calendar, /aria-label="设置"/);
 
   const settings = renderApp(stateWith({ tab: 'settings' }));
   assert.doesNotMatch(settings, /<nav class="nav"/);

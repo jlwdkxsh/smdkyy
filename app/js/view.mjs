@@ -56,9 +56,9 @@ export function renderApp(state) {
 
   const nav = state.tab === 'settings' ? '' : renderNav(state);
   const gear =
-    state.tab === 'settings'
-      ? ''
-      : `<button class="settings-fab" data-action="open-settings" aria-label="设置">${ICON_GEAR}</button>`;
+    state.tab === 'calendar'
+      ? `<button class="settings-fab" data-action="open-settings" aria-label="设置">${ICON_GEAR}</button>`
+      : '';
 
   return `<div class="app-shell">${gear}${page}</div>${nav}${renderOverlays(state)}`;
 }
