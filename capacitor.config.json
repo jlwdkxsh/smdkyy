@@ -1,0 +1,8 @@
+{
+  "appId": "com.jlrc.app",
+  "appName": "记录",
+  "webDir": "app",
+  "android": {
+    "backgroundColor": "#F7F6F3"
+  }
+}

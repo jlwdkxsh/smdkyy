@@ -11,3 +11,15 @@ runtime/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# 移动端构建
+node_modules/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+
+# pnpm 本地缓存
+.pnpm-store/
