@@ -3,10 +3,26 @@
 
 import * as M from './model.mjs';
 import { renderApp, backgroundCss } from './view.mjs';
+import {
+  createServerStorage,
+  createLocalStorage,
+  createBrowserKv,
+  pickBackendKind,
+  pickExportMode,
+} from './storage.mjs';
 
 const hasDom = typeof document !== 'undefined';
 const appEl = hasDom ? document.getElementById('app') : null;
 const toastEl = hasDom ? document.getElementById('toast') : null;
+
+let storage = null;
+
+function createStorage() {
+  const kind = pickBackendKind({
+    capacitor: typeof window !== 'undefined' ? window.Capacitor : undefined,
+  });
+  return kind === 'local' ? createLocalStorage(createBrowserKv()) : createServerStorage();
+}
 
 export const state = {
   data: null,
@@ -161,15 +177,7 @@ function nowClock() {
 
 async function persist(next, message) {
   try {
-    const response = await fetch('/api/data', {
-      method: 'PUT',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(next),
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      throw new Error((payload.errors && payload.errors[0]) || '保存失败');
-    }
+    await storage.save(next);
     state.data = next;
     if (message) showToast(message);
     return true;
@@ -679,14 +687,33 @@ async function handleFileInput(input) {
 
 // ---------------------------------------------------------------- 备份导出 / 导入
 
-function exportData() {
+async function exportData() {
   const backup = M.buildRecordsBackup(state.data, new Date());
   const text = JSON.stringify(backup, null, 2);
+  const name = `jlrc-记录-${M.toLocalDateTime().replace(/[:T]/g, '-')}.json`;
+
+  const capacitor = typeof window !== 'undefined' ? window.Capacitor : undefined;
+  if (pickExportMode({ capacitor }) === 'share') {
+    try {
+      const file = await capacitor.Plugins.Filesystem.writeFile({
+        path: name,
+        data: text,
+        directory: 'CACHE',
+        encoding: 'utf8',
+      });
+      await capacitor.Plugins.Share.share({ title: '导出记录', url: file.uri });
+      showToast('已导出记录');
+    } catch (error) {
+      showToast(`导出失败：${error.message}`, true);
+    }
+    return;
+  }
+
   const blob = new Blob([text], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `jlrc-记录-${M.toLocalDateTime().replace(/[:T]/g, '-')}.json`;
+  link.download = name;
   document.body.appendChild(link);
   link.click();
   link.remove();
@@ -718,21 +745,8 @@ async function importFile(file) {
 async function confirmImport() {
   const pending = state.pendingImport;
   if (!pending) return;
-  const merged = {
-    ...structuredClone(state.data),
-    records: pending.records,
-    events: pending.events,
-    updatedAt: M.toLocalDateTime(new Date()),
-  };
   try {
-    const response = await fetch('/api/import', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(merged),
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error((payload.errors && payload.errors[0]) || '导入失败');
-    state.data = merged;
+    state.data = await storage.importRecords(pending.records, pending.events, state.data);
     state.pendingImport = null;
     state.dialog = null;
     showToast('已导入记录');
@@ -964,12 +978,9 @@ function bindEvents() {
 
 async function boot() {
   try {
-    const response = await fetch('/api/data');
-    if (!response.ok) throw new Error(`读取本地数据失败（${response.status}）`);
-    state.data = M.normalizeData(await response.json());
-    state.info = await fetch('/api/info')
-      .then((info) => (info.ok ? info.json() : null))
-      .catch(() => null);
+    storage = createStorage();
+    state.data = M.normalizeData(await storage.load());
+    state.info = await storage.info();
     const latest = M.dayCards(state.data, state.today).find((card) => card.kind === 'record');
     if (latest) state.todayType = latest.type;
     const [year, month] = state.today.split('-').map(Number);
@@ -989,10 +1000,14 @@ async function boot() {
       }
     }, 60000);
   } catch (error) {
+    const hint =
+      storage && storage.kind === 'local'
+        ? '手机本地存储不可用，请关掉 App 重新打开再试。'
+        : '请确认双击的是 jlrc 文件夹里的「启动」，并且 data 文件夹还在。';
     appEl.innerHTML = `<div class="boot-error">
       <h1>打不开本地数据</h1>
       <p>${String(error.message)}</p>
-      <p>请确认双击的是 jlrc 文件夹里的「启动」，并且 data 文件夹还在。</p>
+      <p>${hint}</p>
     </div>`;
   }
 }
