@@ -14,6 +14,7 @@ export const state = {
   tab: 'today',
   returnTab: 'today',
   calendar: { year: 2026, month: 11, selected: '', chartType: 'body' },
+  todayType: 'body',
   filter: 'all',
   sheet: null,
   menu: null,
@@ -248,6 +249,7 @@ async function saveSheet() {
       sheet.mode === 'edit' ? '已更新' : `已保存 ${sheet.mode === 'backfill' ? sheet.time || '12:00' : nowClock()}`,
     );
     if (ok) {
+      if (sheet.kind === 'record') state.todayType = sheet.type;
       state.sheet = null;
       render();
     }
@@ -699,12 +701,10 @@ function handleAction(action, target) {
       state.filter = target.dataset.filter;
       render();
       break;
-    case 'jump': {
-      const id = target.dataset.target;
-      const node = id ? appEl.querySelector(`[id="${id}"]`) : null;
-      if (node && node.scrollIntoView) node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    case 'switch-type':
+      state.todayType = target.dataset.type;
+      render();
       break;
-    }
     case 'close-day-menu':
       state.dayMenu = null;
       render();
@@ -810,6 +810,8 @@ async function boot() {
     state.info = await fetch('/api/info')
       .then((info) => (info.ok ? info.json() : null))
       .catch(() => null);
+    const latest = M.dayCards(state.data, state.today).find((card) => card.kind === 'record');
+    if (latest) state.todayType = latest.type;
     const [year, month] = state.today.split('-').map(Number);
     state.calendar = { year, month, selected: state.today, chartType: 'body' };
     bindEvents();

@@ -32,13 +32,13 @@ test('底部导航：顺序为 日历 / 今日 / 列表，今日默认高亮', (
   assert.equal((nav.match(/is-active/g) || []).length, 1);
 });
 
-test('今日页：日期标题、三张图、空状态、两个入口', () => {
+test('今日页：日期标题、三个入口、当前小页空状态、记状态入口', () => {
   const html = renderToday(stateWith());
   assert.match(html, /11月21日 周六 · 今天/);
-  assert.equal((html.match(/class="chart-block"/g) || []).length, 3);
+  assert.equal((html.match(/class="type-nav__item/g) || []).length, 3);
+  assert.equal((html.match(/class="chart-block"/g) || []).length, 1);
   assert.match(html, /今天还没有身体记录/);
-  assert.match(html, /今天还没有精力记录/);
-  assert.match(html, /今天还没有心情记录/);
+  assert.doesNotMatch(html, /今天还没有精力记录/);
   assert.match(html, /data-action="add-record">＋ 记状态/);
   assert.match(html, /data-action="add-event">＋ 大事件/);
 });
@@ -51,33 +51,33 @@ function sectionOf(html, key) {
   return html.slice(start, next > -1 ? next : html.length);
 }
 
-test('今日页：顶部三个状态图标，点击跳到对应区块', () => {
+test('今日页：三个状态入口是切换按钮，默认停在身体小页', () => {
   const html = renderToday(stateWith());
-  const targets = [...html.matchAll(/data-action="jump" data-target="([^"]+)"/g)].map((match) => match[1]);
-  assert.deepEqual(targets, ['type-body', 'type-energy', 'type-mood']);
-  for (const id of targets) {
-    assert.match(html, new RegExp(`id="${id}"`), `${id} 区块应存在`);
-  }
-  assert.match(html, /class="type-nav"/);
-  assert.match(html, /aria-label="按状态查看"/);
+  const types = [...html.matchAll(/data-action="switch-type" data-type="([^"]+)"/g)].map((match) => match[1]);
+  assert.deepEqual(types, ['body', 'energy', 'mood']);
+  assert.match(html, /role="tablist"/);
+  assert.equal((html.match(/is-active/g) || []).length, 1);
+  assert.match(html, /class="type-nav__item is-active"[^>]*aria-selected="true"[^>]*data-type="body"/);
+  assert.match(html, /id="type-body"/);
 });
 
-test('今日页：三个状态各自独立成块，卡片归入对应类型', () => {
+test('今日页：切到精力小页，只出现精力内容，不出现身体和心情', () => {
   let data = M.createEmptyData(NOW);
   data = M.addRecord(data, { type: 'body', score: 6, note: '身体的话', recordedAt: '2026-11-21T08:00' }, NOW);
+  data = M.addRecord(data, { type: 'energy', score: 7, note: '精力的话', recordedAt: '2026-11-21T12:00' }, NOW);
   data = M.addRecord(data, { type: 'mood', score: 8, note: '心情的话', recordedAt: '2026-11-21T21:14' }, NOW);
-  const html = renderToday(stateWith({ data }));
-  const bodySection = sectionOf(html, 'body');
-  const energySection = sectionOf(html, 'energy');
-  const moodSection = sectionOf(html, 'mood');
 
-  assert.match(bodySection, /身体的话/);
-  assert.doesNotMatch(bodySection, /心情的话/);
-  assert.match(moodSection, /心情的话/);
-  assert.doesNotMatch(moodSection, /身体的话/);
-  assert.doesNotMatch(energySection, /身体的话|心情的话/);
-  assert.match(bodySection, /1 条/);
-  assert.match(energySection, /还没有记录/);
+  const energy = renderToday(stateWith({ data, todayType: 'energy' }));
+  assert.match(energy, /id="type-energy"/);
+  assert.doesNotMatch(energy, /id="type-body"/);
+  assert.doesNotMatch(energy, /id="type-mood"/);
+  assert.match(energy, /精力的话/);
+  assert.doesNotMatch(energy, /身体的话/);
+  assert.doesNotMatch(energy, /心情的话/);
+
+  const mood = renderToday(stateWith({ data, todayType: 'mood' }));
+  assert.match(mood, /心情的话/);
+  assert.doesNotMatch(mood, /身体的话|精力的话/);
 });
 
 test('今日页：大事件单独成区，不混进状态区块', () => {
@@ -95,7 +95,7 @@ test('今日页：区块标题显示平均分与条数', () => {
   data = M.addRecord(data, { type: 'mood', score: 5, note: '', recordedAt: '2026-11-21T09:20' }, NOW);
   data = M.addRecord(data, { type: 'mood', score: 8, note: '', recordedAt: '2026-11-21T15:00' }, NOW);
   data = M.addRecord(data, { type: 'mood', score: 7, note: '', recordedAt: '2026-11-21T21:14' }, NOW);
-  const html = renderToday(stateWith({ data }));
+  const html = renderToday(stateWith({ data, todayType: 'mood' }));
   const moodSection = sectionOf(html, 'mood');
   assert.match(moodSection, /class="type-section__avg" style="color:#97B842">6\.7</);
   assert.match(moodSection, /3 条/);
@@ -106,18 +106,18 @@ test('今日页：只显示今天的卡片', () => {
   let data = M.createEmptyData(NOW);
   data = M.addRecord(data, { type: 'mood', score: 8, note: '今天', recordedAt: '2026-11-21T21:14' }, NOW);
   data = M.addRecord(data, { type: 'body', score: 4, note: '昨天的', recordedAt: '2026-11-20T08:00' }, NOW);
-  const html = renderToday(stateWith({ data }));
+  const html = renderToday(stateWith({ data, todayType: 'mood' }));
   assert.match(html, /今天/);
   assert.match(html, /21:14/);
   assert.doesNotMatch(html, /昨天的/);
 });
 
-test('今日页：有记录时画出对应类型的折线图与数据点', () => {
+test('今日页：有记录时画出该类型的折线图与数据点', () => {
   let data = M.createEmptyData(NOW);
   data = M.addRecord(data, { type: 'mood', score: 5, note: '', recordedAt: '2026-11-21T09:20' }, NOW);
   data = M.addRecord(data, { type: 'mood', score: 8, note: '', recordedAt: '2026-11-21T15:00' }, NOW);
   data = M.addRecord(data, { type: 'mood', score: 7, note: '', recordedAt: '2026-11-21T21:14' }, NOW);
-  const html = renderToday(stateWith({ data }));
+  const html = renderToday(stateWith({ data, todayType: 'mood' }));
   const start = html.indexOf('data-chart="mood"');
   const block = html.slice(start, start + 4000);
   assert.match(block, /<svg/);
@@ -129,8 +129,10 @@ test('今日页：有记录时画出对应类型的折线图与数据点', () =>
   // 数据点带时间/分数/备注，供悬停与点击查看
   assert.match(block, /<title>09:20 · 心情 5 分<\/title>/);
   assert.match(block, /data-clock="21:14" data-score="7"/);
-  // 身体没有记录，仍是空状态
-  assert.match(html, /今天还没有身体记录/);
+  // 切到身体小页时不画心情的图
+  const body = renderToday(stateWith({ data, todayType: 'body' }));
+  assert.doesNotMatch(body, /data-chart="mood"/);
+  assert.match(body, /今天还没有身体记录/);
 });
 
 test('记录卡片：表情、类型、分数颜色、时间、备注', () => {

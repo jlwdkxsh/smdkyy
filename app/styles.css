@@ -117,6 +117,16 @@ textarea {
   border-color: #d8d5cd;
 }
 
+.type-nav__item.is-active {
+  border-color: var(--text);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.type-nav__item.is-active .type-nav__label {
+  color: var(--text);
+  font-weight: 600;
+}
+
 .type-nav__icon {
   display: flex;
   color: #4b5563;

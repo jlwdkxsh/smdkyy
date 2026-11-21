@@ -77,18 +77,19 @@ export function renderToday(state) {
   const data = state.data;
   const today = state.today;
   const cards = M.dayCards(data, today);
+  const active = M.TYPES.find((type) => type.key === state.todayType) || M.TYPES[0];
 
   const nav = M.TYPES.map((type) => {
     const stats = M.typeAverage(data, today, type.key);
     const color = stats ? M.levelColor(data, stats.level) : '';
-    return `<button class="type-nav__item" data-action="jump" data-target="type-${type.key}">
+    const isActive = type.key === active.key;
+    return `<button class="type-nav__item${isActive ? ' is-active' : ''}" role="tab" aria-selected="${isActive}" data-action="switch-type" data-type="${type.key}">
       <span class="type-nav__icon">${TYPE_ICONS[type.key]}</span>
       <span class="type-nav__label">${type.label}</span>
       <span class="type-nav__avg"${color ? ` style="color:${color}"` : ''}>${stats ? stats.avg.toFixed(1) : '—'}</span>
     </button>`;
   }).join('');
 
-  const sections = M.TYPES.map((type) => renderTypeSection(state, type, cards)).join('');
   const events = cards.filter((card) => card.kind === 'event');
   const eventsSection = events.length
     ? `<section class="type-section" id="type-event" data-section="event">
@@ -105,8 +106,8 @@ export function renderToday(state) {
   <header class="page-head">
     <h1 class="page-title">${M.formatShortDate(today, today)}</h1>
   </header>
-  <nav class="type-nav" aria-label="按状态查看">${nav}</nav>
-  ${sections}${eventsSection}
+  <nav class="type-nav" role="tablist" aria-label="按状态查看">${nav}</nav>
+  ${renderTypePanel(state, active, cards)}${eventsSection}
   <div class="today-actions">
     <button class="btn btn--primary" data-action="add-record">＋ 记状态</button>
     <button class="btn btn--ghost" data-action="add-event">＋ 大事件</button>
@@ -114,7 +115,8 @@ export function renderToday(state) {
 </main>`;
 }
 
-function renderTypeSection(state, type, cards) {
+/** 只有当前选中的状态会出现在页面上 */
+function renderTypePanel(state, type, cards) {
   const data = state.data;
   const stats = M.typeAverage(data, state.today, type.key);
   const typeCards = M.filterCards(cards, type.key);
