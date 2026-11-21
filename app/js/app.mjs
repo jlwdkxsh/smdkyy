@@ -468,12 +468,18 @@ function loadImage(src) {
   });
 }
 
-/** 把背景图压到长边 1280 以内，整体不超过限制 */
+/** 把背景图压到长边 2560 以内，优先 WebP，整体不超过约 2MB */
 async function compressBackground(file) {
   const src = await readFileAsDataUrl(file);
   const image = await loadImage(src);
   const longest = Math.max(image.width, image.height);
-  for (const target of [1280, 1024, 800]) {
+  const encoders = [
+    ['image/webp', 0.86],
+    ['image/webp', 0.72],
+    ['image/jpeg', 0.82],
+    ['image/jpeg', 0.65],
+  ];
+  for (const target of [2560, 2048, 1600]) {
     const scale = Math.min(1, target / longest);
     const width = Math.max(1, Math.round(image.width * scale));
     const height = Math.max(1, Math.round(image.height * scale));
@@ -481,8 +487,8 @@ async function compressBackground(file) {
     canvas.width = width;
     canvas.height = height;
     canvas.getContext('2d').drawImage(image, 0, 0, width, height);
-    for (const quality of [0.82, 0.7, 0.55]) {
-      const url = canvas.toDataURL('image/jpeg', quality);
+    for (const [type, quality] of encoders) {
+      const url = canvas.toDataURL(type, quality);
       if (url.length <= M.LIMITS.backgroundDataUrl) return url;
     }
   }

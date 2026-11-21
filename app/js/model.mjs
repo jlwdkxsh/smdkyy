@@ -34,7 +34,8 @@ export const LIMITS = {
   note: 500,
   eventText: 200,
   imageDataUrl: 200000,
-  backgroundDataUrl: 700000,
+  // 背景图按 base64 长度算：约 2MB 原图 ≈ 2.8M 字符
+  backgroundDataUrl: 2800000,
 };
 
 export const DEFAULT_BACKGROUND = {

@@ -420,6 +420,24 @@ test('resetAppearance：只重置外观，保留颜色、表情图与记录', ()
   assert.equal(data.settings.background.mode, 'image', '不修改原对象');
 });
 
+test('背景图上限：约 2MB（base64 2.8M 字符）', () => {
+  assert.equal(M.LIMITS.backgroundDataUrl, 2800000);
+  const prefix = 'data:image/webp;base64,';
+  const atLimit = prefix + 'A'.repeat(M.LIMITS.backgroundDataUrl - prefix.length);
+
+  const data = baseData();
+  data.settings.background = { ...M.DEFAULT_BACKGROUND, mode: 'image', image: atLimit };
+  assert.deepEqual(M.validateData(data), [], '刚好到上限应通过');
+
+  const over = baseData();
+  over.settings.background = {
+    ...M.DEFAULT_BACKGROUND,
+    mode: 'image',
+    image: `${atLimit}A`,
+  };
+  assert.match(M.validateData(over).join(), /背景图/);
+});
+
 test('validateData：接受空数据，拒绝坏版本/坏档位/坏记录', () => {
   assert.deepEqual(M.validateData(baseData()), []);
   assert.match(M.validateData({ ...baseData(), version: 99 }).join(), /版本/);
