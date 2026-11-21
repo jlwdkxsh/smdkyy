@@ -699,6 +699,12 @@ function handleAction(action, target) {
       state.filter = target.dataset.filter;
       render();
       break;
+    case 'jump': {
+      const id = target.dataset.target;
+      const node = id ? appEl.querySelector(`[id="${id}"]`) : null;
+      if (node && node.scrollIntoView) node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      break;
+    }
     case 'close-day-menu':
       state.dayMenu = null;
       render();

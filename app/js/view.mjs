@@ -19,6 +19,12 @@ const ICON_TODAY = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" 
 const ICON_LIST = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 6.5h12M8 12h12M8 17.5h12"/><circle cx="4" cy="6.5" r="1.2" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="4" cy="17.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
 const ICON_GEAR = `<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3.2"/><path d="M12 3.5v2M12 18.5v2M20.5 12h-2M5.5 12h-2M17.9 6.1l-1.4 1.4M7.5 16.5l-1.4 1.4M17.9 17.9l-1.4-1.4M7.5 7.5L6.1 6.1"/></svg>`;
 
+const TYPE_ICONS = {
+  body: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 20.2s-7.2-4.5-7.2-9.6A4.4 4.4 0 0 1 12 7.4a4.4 4.4 0 0 1 7.2 3.2c0 5.1-7.2 9.6-7.2 9.6Z"/></svg>`,
+  energy: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M13.2 2.8 6 13.4h5.1l-.9 7.8 7.8-11.2h-5.2l.4-7.2Z"/></svg>`,
+  mood: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.2"/><path d="M8.8 14.6c.8 1.3 1.9 1.9 3.2 1.9s2.4-.6 3.2-1.9"/><circle cx="9.3" cy="9.8" r="0.9" fill="currentColor" stroke="none"/><circle cx="14.7" cy="9.8" r="0.9" fill="currentColor" stroke="none"/></svg>`,
+};
+
 const NAV_ITEMS = [
   { tab: 'calendar', label: '日历', icon: ICON_CALENDAR },
   { tab: 'today', label: '今日', icon: ICON_TODAY },
@@ -70,21 +76,37 @@ export function renderNav(state) {
 export function renderToday(state) {
   const data = state.data;
   const today = state.today;
-  const charts = M.TYPES.map((type) => renderChartBlock(state, type)).join('');
   const cards = M.dayCards(data, today);
-  const cardsHtml = cards.length
-    ? `<div class="cards">${cards.map((card) => renderCard(card, state)).join('')}</div>`
-    : `<p class="empty">今天还没有记录</p>`;
+
+  const nav = M.TYPES.map((type) => {
+    const stats = M.typeAverage(data, today, type.key);
+    const color = stats ? M.levelColor(data, stats.level) : '';
+    return `<button class="type-nav__item" data-action="jump" data-target="type-${type.key}">
+      <span class="type-nav__icon">${TYPE_ICONS[type.key]}</span>
+      <span class="type-nav__label">${type.label}</span>
+      <span class="type-nav__avg"${color ? ` style="color:${color}"` : ''}>${stats ? stats.avg.toFixed(1) : '—'}</span>
+    </button>`;
+  }).join('');
+
+  const sections = M.TYPES.map((type) => renderTypeSection(state, type, cards)).join('');
+  const events = cards.filter((card) => card.kind === 'event');
+  const eventsSection = events.length
+    ? `<section class="type-section" id="type-event" data-section="event">
+    <header class="type-section__head">
+      <span class="type-section__icon" aria-hidden="true">📌</span>
+      <h2 class="type-section__title">大事件</h2>
+      <span class="type-section__count">${events.length} 条</span>
+    </header>
+    <div class="cards">${events.map((card) => renderCard(card, state)).join('')}</div>
+  </section>`
+    : '';
 
   return `<main class="page page--today">
   <header class="page-head">
     <h1 class="page-title">${M.formatShortDate(today, today)}</h1>
   </header>
-  <section class="charts" aria-label="今天的折线图">${charts}</section>
-  <section class="today-list">
-    <h2 class="section-title">今天的记录</h2>
-    ${cardsHtml}
-  </section>
+  <nav class="type-nav" aria-label="按状态查看">${nav}</nav>
+  ${sections}${eventsSection}
   <div class="today-actions">
     <button class="btn btn--primary" data-action="add-record">＋ 记状态</button>
     <button class="btn btn--ghost" data-action="add-event">＋ 大事件</button>
@@ -92,15 +114,27 @@ export function renderToday(state) {
 </main>`;
 }
 
-export function renderChartBlock(state, type) {
-  const svg = chartSvg(state.data, state.today, type.key, { height: 120 });
-  const body = svg
+function renderTypeSection(state, type, cards) {
+  const data = state.data;
+  const stats = M.typeAverage(data, state.today, type.key);
+  const typeCards = M.filterCards(cards, type.key);
+  const svg = chartSvg(data, state.today, type.key, { height: 120 });
+  const chart = svg
     ? `<div class="chart-body">${svg}</div>`
     : `<p class="chart-empty">今天还没有${type.label}记录</p>`;
-  return `<article class="chart-block" data-chart="${type.key}">
-    <h2 class="chart-title">${type.label}</h2>
-    ${body}
-  </article>`;
+  const avg = stats
+    ? `<span class="type-section__avg" style="color:${M.levelColor(data, stats.level)}">${stats.avg.toFixed(1)}</span>`
+    : '';
+  return `<section class="type-section" id="type-${type.key}" data-section="${type.key}">
+    <header class="type-section__head">
+      <span class="type-section__icon" aria-hidden="true">${TYPE_ICONS[type.key]}</span>
+      <h2 class="type-section__title">${type.label}</h2>
+      ${avg}
+      <span class="type-section__count">${stats ? `${stats.count} 条` : '还没有记录'}</span>
+    </header>
+    <div class="chart-block" data-chart="${type.key}">${chart}</div>
+    ${typeCards.length ? `<div class="cards">${typeCards.map((card) => renderCard(card, state)).join('')}</div>` : ''}
+  </section>`;
 }
 
 // ---------------------------------------------------------------- 卡片
