@@ -48,8 +48,47 @@ runtime\node.exe --test --test-isolation=none "tests/*.test.mjs"
 
 或 `runtime\node.exe server.mjs --port 4173` 直接起服务调试。
 
+## 手机端（Android）
+
+安装包：`dist\jlrc-1.0.0-debug.apk`（约 4.3MB，debug 签名，可直接安装）。
+
+安装步骤：
+
+1. 把 APK 传到手机（数据线、微信文件传输助手、网盘都行）
+2. 在手机上点开安装，允许“安装未知来源应用”
+3. 桌面出现「记录」图标，点开即用，完全离线
+
+手机版数据存在 App 内部的 IndexedDB，和电脑版互不影响。
+
+- 迁移已有记录：电脑「设置 → 导出记录」→ 把 JSON 传到手机 → 手机「设置 → 导入记录」
+- 颜色、10 档表情图、背景需要在手机上重新设置（导出本来就不含外观）
+- **卸载 App 会清掉手机上的数据**；覆盖安装（装新版本）不会
+
+### 重新打包 APK
+
+需要 JDK 21、Android SDK（platform 36 / build-tools 36）、Gradle 8.14.3。本机已装好：
+
+- JDK：`%LOCALAPPDATA%\Programs\jlrc-tools\jdk-21.0.13.1+2`
+- Gradle：`%LOCALAPPDATA%\Programs\jlrc-tools\gradle-8.14.3`
+- Android SDK：`%LOCALAPPDATA%\Android\Sdk`
+
+在项目根目录执行：
+
+```
+node node_modules\@capacitor\cli\bin\capacitor sync android
+```
+
+然后在 `android` 目录，设置好 `JAVA_HOME` 和 `ANDROID_HOME` 后执行：
+
+```
+%LOCALAPPDATA%\Programs\jlrc-tools\gradle-8.14.3\bin\gradle.bat assembleDebug
+```
+
+产物：`android\app\build\outputs\apk\debug\app-debug.apk`
+
 ## 注意
 
 - 请固定用同一个浏览器（Chrome 或 Edge）打开，数据在磁盘上，换浏览器不影响。
 - 不要删除 `data` 文件夹，那是唯一的记录。
 - 清除浏览器缓存、重装浏览器都不会影响数据。
+- 手机端是 debug 签名，只适合自己安装，不要发到应用商店。
