@@ -117,7 +117,7 @@ async function persist(next, message) {
 
 function openRecordSheet(mode, extra = {}) {
   if (mode === 'create') {
-    state.sheet = { kind: 'record', mode, type: 'body', score: 5, note: '' };
+    state.sheet = { kind: 'record', mode, type: state.todayType || 'body', score: 5, note: '' };
   } else if (mode === 'backfill') {
     state.sheet = {
       kind: 'record',
@@ -628,9 +628,6 @@ function handleAction(action, target) {
       break;
     case 'add-record':
       openRecordSheet('create');
-      break;
-    case 'add-event':
-      openEventSheet('create', { date: state.today });
       break;
     case 'close-sheet':
       state.sheet = null;

@@ -90,28 +90,13 @@ export function renderToday(state) {
     </button>`;
   }).join('');
 
-  const events = cards.filter((card) => card.kind === 'event');
-  const eventsSection = events.length
-    ? `<section class="type-section" id="type-event" data-section="event">
-    <header class="type-section__head">
-      <span class="type-section__icon" aria-hidden="true">📌</span>
-      <h2 class="type-section__title">大事件</h2>
-      <span class="type-section__count">${events.length} 条</span>
-    </header>
-    <div class="cards">${events.map((card) => renderCard(card, state)).join('')}</div>
-  </section>`
-    : '';
-
   return `<main class="page page--today">
-  <header class="page-head">
+  <header class="page-head page-head--today">
     <h1 class="page-title">${M.formatShortDate(today, today)}</h1>
+    <button class="today-add" data-action="add-record">＋ 记录</button>
   </header>
   <nav class="type-nav" role="tablist" aria-label="按状态查看">${nav}</nav>
-  ${renderTypePanel(state, active, cards)}${eventsSection}
-  <div class="today-actions">
-    <button class="btn btn--primary" data-action="add-record">＋ 记状态</button>
-    <button class="btn btn--ghost" data-action="add-event">＋ 大事件</button>
-  </div>
+  ${renderTypePanel(state, active, cards)}
 </main>`;
 }
 

@@ -32,15 +32,16 @@ test('底部导航：顺序为 日历 / 今日 / 列表，今日默认高亮', (
   assert.equal((nav.match(/is-active/g) || []).length, 1);
 });
 
-test('今日页：日期标题、三个入口、当前小页空状态、记状态入口', () => {
+test('今日页：日期标题、三个入口、当前小页空状态、右上角记录按钮', () => {
   const html = renderToday(stateWith());
   assert.match(html, /11月21日 周六 · 今天/);
   assert.equal((html.match(/class="type-nav__item/g) || []).length, 3);
   assert.equal((html.match(/class="chart-block"/g) || []).length, 1);
   assert.match(html, /今天还没有身体记录/);
   assert.doesNotMatch(html, /今天还没有精力记录/);
-  assert.match(html, /data-action="add-record">＋ 记状态/);
-  assert.match(html, /data-action="add-event">＋ 大事件/);
+  assert.match(html, /class="page-head page-head--today"/);
+  assert.match(html, /class="today-add" data-action="add-record">＋ 记录/);
+  assert.doesNotMatch(html, /data-action="add-event"/);
 });
 
 function sectionOf(html, key) {
@@ -80,14 +81,15 @@ test('今日页：切到精力小页，只出现精力内容，不出现身体�
   assert.doesNotMatch(mood, /身体的话|精力的话/);
 });
 
-test('今日页：大事件单独成区，不混进状态区块', () => {
+test('今日页：不再显示大事件，也没有大事件入口', () => {
   let data = M.createEmptyData(NOW);
   data = M.addRecord(data, { type: 'body', score: 6, note: '身体的话', recordedAt: '2026-11-21T08:00' }, NOW);
   data = M.addEvent(data, { text: '搬家', date: TODAY }, NOW);
   const html = renderToday(stateWith({ data }));
-  assert.match(html, /id="type-event"/);
-  assert.match(sectionOf(html, 'event'), /搬家/);
-  assert.doesNotMatch(sectionOf(html, 'body'), /搬家/);
+  assert.doesNotMatch(html, /搬家/);
+  assert.doesNotMatch(html, /大事件/);
+  assert.doesNotMatch(html, /id="type-event"/);
+  assert.doesNotMatch(html, /data-action="add-event"/);
 });
 
 test('今日页：区块标题显示平均分与条数', () => {
