@@ -150,6 +150,22 @@ test('设置页：图片模式显示选择图片与清除', () => {
   assert.match(html, /class="bg-image-thumb" style="background:url\(data:image\/jpeg;base64,AAAA\)/);
 });
 
+test('设置页：卡片透明度滑块，遮罩滑块只在图片模式出现', () => {
+  const solid = renderSettingsPage(stateWith());
+  assert.match(solid, /value="100" data-appearance="surfaceAlpha"/);
+  assert.match(solid, /class="range-field__value">100%/);
+  assert.doesNotMatch(solid, /data-appearance="scrim"/);
+
+  const data = M.createEmptyData(NOW);
+  data.settings.background = { ...M.DEFAULT_BACKGROUND, mode: 'image', image: 'data:image/jpeg;base64,AAAA' };
+  data.settings.appearance = { ...M.DEFAULT_APPEARANCE, surfaceAlpha: 60 };
+  const image = renderSettingsPage(stateWith({ data }));
+  assert.match(image, /value="60" data-appearance="surfaceAlpha"/);
+  assert.match(image, /data-appearance="scrim"/);
+  assert.match(image, /value="30" data-appearance="scrim"/);
+  assert.match(image, /class="range-field__value">30%/);
+});
+
 test('GET /api/info：返回数据文件位置', async () => {
   const dataDir = await mkdtemp(path.join(tmpdir(), 'jlrc-info-'));
   const api = await startServer({ dataDir, port: 0, quiet: true });

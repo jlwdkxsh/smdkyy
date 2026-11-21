@@ -86,6 +86,44 @@ function render() {
   attachDayCells();
   if (state.crop) setupCropCanvas();
   applyBackground();
+  applyAppearance();
+}
+
+function applyAppearance() {
+  if (!state.data) return;
+  const appearance = { ...M.DEFAULT_APPEARANCE, ...(state.data.settings.appearance || {}) };
+  const alpha = Number.isFinite(appearance.surfaceAlpha) ? appearance.surfaceAlpha : 100;
+  document.documentElement.style.setProperty('--surface-alpha', String(alpha / 100));
+}
+
+function applyRangeValue(range) {
+  if (!state.data) return;
+  const key = range.dataset.appearance;
+  const value = Math.max(0, Math.min(100, Math.round(Number(range.value) || 0)));
+  if (key === 'surfaceAlpha') {
+    state.data.settings.appearance = {
+      ...M.DEFAULT_APPEARANCE,
+      ...(state.data.settings.appearance || {}),
+      surfaceAlpha: value,
+    };
+    document.documentElement.style.setProperty('--surface-alpha', String(value / 100));
+  } else if (key === 'scrim') {
+    state.data.settings.background = {
+      ...M.DEFAULT_BACKGROUND,
+      ...(state.data.settings.background || {}),
+      scrim: value,
+    };
+    document.documentElement.style.setProperty('--scrim', String(value / 100));
+  }
+  const label = range.closest('.range-field') && range.closest('.range-field').querySelector('.range-field__value');
+  if (label) label.textContent = `${value}%`;
+}
+
+async function persistAppearance() {
+  if (!state.data) return;
+  const next = structuredClone(state.data);
+  next.updatedAt = M.toLocalDateTime(new Date());
+  await persist(next, null);
 }
 
 function applyBackground() {
@@ -864,12 +902,22 @@ function bindEvents() {
   });
 
   appEl.addEventListener('input', (event) => {
+    const range = event.target.closest('[data-appearance]');
+    if (range) {
+      applyRangeValue(range);
+      return;
+    }
     const field = event.target.dataset.field;
     if (!field || !state.sheet) return;
     state.sheet[field] = event.target.value;
   });
 
   appEl.addEventListener('change', (event) => {
+    const range = event.target.closest('[data-appearance]');
+    if (range) {
+      persistAppearance();
+      return;
+    }
     const colorInput = event.target.closest('[data-color]');
     if (colorInput) {
       updateLevelColor(Number(colorInput.dataset.color), colorInput.value);

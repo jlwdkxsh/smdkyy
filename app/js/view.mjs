@@ -454,11 +454,29 @@ function renderAppearanceBlock(state) {
     </div>`;
   }
 
+  const appearance = { ...M.DEFAULT_APPEARANCE, ...((state.data.settings && state.data.settings.appearance) || {}) };
+  const surfaceAlpha = Number.isInteger(appearance.surfaceAlpha) ? appearance.surfaceAlpha : 100;
+  const scrim = Number.isInteger(bg.scrim) ? bg.scrim : 30;
+
   return `<section class="settings-block">
     <h2 class="section-title">外观</h2>
     <div class="bg-preview" style="background:${backgroundCss(bg)}"></div>
     <div class="segmented" role="tablist" aria-label="背景类型">${modes}</div>
     <div class="bg-fields">${fields}</div>
+    <div class="range-fields">
+      <label class="range-field"><span>卡片透明度</span>
+        <input type="range" min="0" max="100" step="1" value="${surfaceAlpha}" data-appearance="surfaceAlpha">
+        <span class="range-field__value">${surfaceAlpha}%</span>
+      </label>
+      ${
+        bg.mode === 'image'
+          ? `<label class="range-field"><span>背景遮罩</span>
+        <input type="range" min="0" max="100" step="1" value="${scrim}" data-appearance="scrim">
+        <span class="range-field__value">${scrim}%</span>
+      </label>`
+          : ''
+      }
+    </div>
     <input type="file" accept="image/*" data-file="background" hidden>
   </section>`;
 }
