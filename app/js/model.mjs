@@ -611,6 +611,19 @@ export function parseRecordsBackup(payload) {
   return { ok: true, records: payload.records, events: payload.events };
 }
 
+/** 只重置外观（背景 + 透明度），不动 10 档颜色、表情图和记录 */
+export function resetAppearance(data, now = new Date()) {
+  return {
+    ...data,
+    settings: {
+      ...data.settings,
+      background: { ...DEFAULT_BACKGROUND },
+      appearance: { ...DEFAULT_APPEARANCE },
+    },
+    updatedAt: toLocalDateTime(now),
+  };
+}
+
 // ---------------------------------------------------------------- 整份数据校验
 
 export function validateData(data) {

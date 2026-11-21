@@ -477,6 +477,9 @@ function renderAppearanceBlock(state) {
           : ''
       }
     </div>
+    <div class="settings-actions">
+      <button class="btn btn--ghost" data-action="reset-appearance">恢复默认外观</button>
+    </div>
     <input type="file" accept="image/*" data-file="background" hidden>
   </section>`;
 }

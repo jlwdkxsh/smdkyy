@@ -402,6 +402,24 @@ test('parseRecordsBackup：拒绝损坏或异类文件', () => {
   assert.match(badEvent.errors[0], /大事件/);
 });
 
+test('resetAppearance：只重置外观，保留颜色、表情图与记录', () => {
+  let data = baseData();
+  data.settings.background = { ...M.DEFAULT_BACKGROUND, mode: 'image', image: 'data:image/jpeg;base64,AAAA', scrim: 80 };
+  data.settings.appearance = { surfaceAlpha: 40 };
+  data.settings.levels[6].color = '#123456';
+  data.settings.levels[6].image = 'data:image/png;base64,BBBB';
+  data = M.addRecord(data, { type: 'mood', score: 7, note: '留着', recordedAt: '2026-11-21T21:14' }, NOW);
+
+  const reset = M.resetAppearance(data, NOW);
+  assert.deepEqual(reset.settings.background, M.DEFAULT_BACKGROUND);
+  assert.deepEqual(reset.settings.appearance, M.DEFAULT_APPEARANCE);
+  assert.equal(reset.settings.levels[6].color, '#123456');
+  assert.equal(reset.settings.levels[6].image, 'data:image/png;base64,BBBB');
+  assert.equal(reset.records.length, 1);
+  assert.equal(reset.updatedAt, '2026-11-21T19:30');
+  assert.equal(data.settings.background.mode, 'image', '不修改原对象');
+});
+
 test('validateData：接受空数据，拒绝坏版本/坏档位/坏记录', () => {
   assert.deepEqual(M.validateData(baseData()), []);
   assert.match(M.validateData({ ...baseData(), version: 99 }).join(), /版本/);

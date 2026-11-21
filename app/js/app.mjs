@@ -147,6 +147,12 @@ async function updateBackground(patch) {
   if (ok) render();
 }
 
+async function resetAppearance() {
+  const next = M.resetAppearance(state.data, new Date());
+  const ok = await persist(next, '已恢复默认外观');
+  if (ok) render();
+}
+
 function nowClock() {
   return M.toLocalDateTime(new Date()).slice(11, 16);
 }
@@ -874,6 +880,9 @@ function handleAction(action, target) {
     }
     case 'bg-clear':
       updateBackground({ image: null });
+      break;
+    case 'reset-appearance':
+      resetAppearance();
       break;
     default:
       break;
