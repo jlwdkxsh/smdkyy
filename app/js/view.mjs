@@ -105,7 +105,7 @@ function renderTypePanel(state, type, cards) {
   const data = state.data;
   const stats = M.typeAverage(data, state.today, type.key);
   const typeCards = M.filterCards(cards, type.key);
-  const svg = chartSvg(data, state.today, type.key, { height: 120 });
+  const svg = chartSvg(data, state.today, type.key, { height: 132 });
   const chart = svg
     ? `<div class="chart-body">${svg}</div>`
     : `<p class="chart-empty">今天还没有${type.label}记录</p>`;
