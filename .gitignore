@@ -1,0 +1,13 @@
+# 个人数据：只在本机，不进版本库
+data/
+
+# 随包 Node 运行时（约 89MB 的二进制）
+runtime/
+
+# 临时文件
+*.tmp
+*.log
+.chrome-*
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,11 @@
+{
+  "name": "jlrc",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "个人状态记录 App（本机运行）",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test --test-isolation=none \"tests/*.test.mjs\""
+  }
+}
