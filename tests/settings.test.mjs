@@ -46,8 +46,8 @@ test('设置页：显示数据位置、上次保存时间、导出导入按钮',
   assert.match(html, /D:\\jlrc\\data\\data\.json/);
   assert.match(html, /上次保存/);
   assert.match(html, /11月21日 周六 · 今天 19:30/);
-  assert.match(html, /data-action="export-data"/);
-  assert.match(html, /data-action="import-data"/);
+  assert.match(html, /data-action="export-data">导出记录</);
+  assert.match(html, /data-action="import-data">导入记录</);
   assert.match(html, /data-file="image"/);
   assert.match(html, /data-file="import"/);
 });

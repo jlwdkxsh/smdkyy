@@ -339,6 +339,69 @@ test('validateData：外观设置校验', () => {
   assert.deepEqual(M.validateData(oldData), [], '旧数据没有外观字段也能通过');
 });
 
+test('buildRecordsBackup：只含记录与大事件，不含外观', () => {
+  let data = baseData();
+  data = M.addRecord(data, { type: 'mood', score: 8, note: '好', recordedAt: '2026-11-21T21:14' }, NOW);
+  data = M.addEvent(data, { text: '搬家', date: '2026-11-20' }, NOW);
+  data.settings.levels[0].image = 'data:image/png;base64,AAAA';
+
+  const backup = M.buildRecordsBackup(data, NOW);
+  assert.equal(backup.kind, M.RECORDS_BACKUP_KIND);
+  assert.equal(backup.version, 1);
+  assert.equal(backup.exportedAt, '2026-11-21T19:30');
+  assert.equal(backup.records.length, 1);
+  assert.equal(backup.events.length, 1);
+  assert.equal(backup.settings, undefined);
+  assert.equal(JSON.stringify(backup).includes('data:image'), false, '导出不应包含图片');
+});
+
+test('parseRecordsBackup：接受记录备份与旧版整份数据', () => {
+  const empty = M.parseRecordsBackup({ kind: M.RECORDS_BACKUP_KIND, version: 1, records: [], events: [] });
+  assert.equal(empty.ok, true);
+  assert.deepEqual(empty.records, []);
+
+  const legacy = M.parseRecordsBackup(baseData());
+  assert.equal(legacy.ok, true);
+  assert.deepEqual(legacy.records, []);
+  assert.deepEqual(legacy.events, []);
+
+  const withData = addRecordSample();
+  const parsed = M.parseRecordsBackup(withData);
+  assert.equal(parsed.ok, true);
+  assert.equal(parsed.records.length, 1);
+  assert.equal(parsed.events.length, 1);
+});
+
+function addRecordSample() {
+  let data = baseData();
+  data = M.addRecord(data, { type: 'body', score: 6, note: '腰有点僵', recordedAt: '2026-11-21T08:00' }, NOW);
+  data = M.addEvent(data, { text: '搬家', date: '2026-11-20' }, NOW);
+  return data;
+}
+
+test('parseRecordsBackup：拒绝损坏或异类文件', () => {
+  assert.equal(M.parseRecordsBackup(null).ok, false);
+  assert.equal(M.parseRecordsBackup('x').ok, false);
+  assert.equal(M.parseRecordsBackup({ kind: 'other' }).ok, false);
+  assert.match(M.parseRecordsBackup({ kind: 'other' }).errors.join(), /记录备份/);
+
+  const badRecord = M.parseRecordsBackup({
+    kind: M.RECORDS_BACKUP_KIND,
+    records: [{ id: 'x', type: 'mood', score: 99, note: '', recordedAt: '2026-11-21T09:00', createdAt: '2026-11-21T09:00' }],
+    events: [],
+  });
+  assert.equal(badRecord.ok, false);
+  assert.match(badRecord.errors[0], /记录/);
+
+  const badEvent = M.parseRecordsBackup({
+    kind: M.RECORDS_BACKUP_KIND,
+    records: [],
+    events: [{ id: 'e', text: '  ', date: '2026-11-20', createdAt: '2026-11-20T10:00' }],
+  });
+  assert.equal(badEvent.ok, false);
+  assert.match(badEvent.errors[0], /大事件/);
+});
+
 test('validateData：接受空数据，拒绝坏版本/坏档位/坏记录', () => {
   assert.deepEqual(M.validateData(baseData()), []);
   assert.match(M.validateData({ ...baseData(), version: 99 }).join(), /版本/);

@@ -551,6 +551,66 @@ export function averageLabel(stats) {
   return stats.avg === null ? '—' : stats.avg.toFixed(1);
 }
 
+export function validateRecordItem(record) {
+  if (!record || typeof record.id !== 'string' || !record.id) return '记录缺少编号';
+  if (validateType(record.type)) return '记录类型不正确';
+  if (validateScore(record.score)) return '记录分数不正确';
+  if (validateNote(record.note)) return '记录备注不正确';
+  if (!isDateTimeString(record.recordedAt)) return '记录时间不正确';
+  if (!isDateTimeString(record.createdAt)) return '记录创建时间不正确';
+  return null;
+}
+
+export function validateEventItem(event) {
+  if (!event || typeof event.id !== 'string' || !event.id) return '大事件缺少编号';
+  if (validateEventText(event.text)) return '大事件内容不正确';
+  if (!isValidDateKey(event.date)) return '大事件日期不正确';
+  if (!isDateTimeString(event.createdAt)) return '大事件创建时间不正确';
+  return null;
+}
+
+// ---------------------------------------------------------------- 记录备份（不含外观）
+
+export const RECORDS_BACKUP_KIND = 'jlrc-records';
+
+/** 导出只包含记录与大事件，不含颜色、表情图、背景 */
+export function buildRecordsBackup(data, now = new Date()) {
+  return {
+    kind: RECORDS_BACKUP_KIND,
+    version: 1,
+    exportedAt: toLocalDateTime(now),
+    records: data.records,
+    events: data.events,
+  };
+}
+
+/**
+ * 解析记录备份；也兼容旧版整份 data.json（读取其中的记录与大事件）。
+ * @returns {{ok: true, records: Array, events: Array} | {ok: false, errors: string[]}}
+ */
+export function parseRecordsBackup(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return { ok: false, errors: ['文件格式不正确'] };
+  }
+  const errors = [];
+  if (payload.kind !== undefined && payload.kind !== RECORDS_BACKUP_KIND) {
+    errors.push('这不是本应用的记录备份');
+  }
+  if (!Array.isArray(payload.records)) errors.push('文件里没有记录列表');
+  if (!Array.isArray(payload.events)) errors.push('文件里没有大事件列表');
+  if (errors.length) return { ok: false, errors };
+
+  for (const record of payload.records) {
+    const error = validateRecordItem(record);
+    if (error) return { ok: false, errors: [`记录数据有误：${error}`] };
+  }
+  for (const event of payload.events) {
+    const error = validateEventItem(event);
+    if (error) return { ok: false, errors: [`大事件数据有误：${error}`] };
+  }
+  return { ok: true, records: payload.records, events: payload.events };
+}
+
 // ---------------------------------------------------------------- 整份数据校验
 
 export function validateData(data) {
@@ -631,13 +691,11 @@ export function validateData(data) {
     errors.push('记录数据损坏');
   } else {
     for (const record of data.records) {
-      if (!record || typeof record.id !== 'string' || !record.id) errors.push('记录缺少编号');
-      else if (validateType(record.type)) errors.push('记录类型不正确');
-      else if (validateScore(record.score)) errors.push('记录分数不正确');
-      else if (validateNote(record.note)) errors.push('记录备注不正确');
-      else if (!isDateTimeString(record.recordedAt)) errors.push('记录时间不正确');
-      else if (!isDateTimeString(record.createdAt)) errors.push('记录创建时间不正确');
-      if (errors.length) break;
+      const error = validateRecordItem(record);
+      if (error) {
+        errors.push(error);
+        break;
+      }
     }
   }
 
@@ -645,11 +703,11 @@ export function validateData(data) {
     errors.push('大事件数据损坏');
   } else {
     for (const event of data.events) {
-      if (!event || typeof event.id !== 'string' || !event.id) errors.push('大事件缺少编号');
-      else if (validateEventText(event.text)) errors.push('大事件内容不正确');
-      else if (!isValidDateKey(event.date)) errors.push('大事件日期不正确');
-      else if (!isDateTimeString(event.createdAt)) errors.push('大事件创建时间不正确');
-      if (errors.length) break;
+      const error = validateEventItem(event);
+      if (error) {
+        errors.push(error);
+        break;
+      }
     }
   }
 

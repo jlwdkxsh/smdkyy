@@ -518,8 +518,8 @@ export function renderSettingsPage(state) {
     <p class="settings-line">位置：${esc(dataPath)}</p>
     <p class="settings-line">上次保存：${esc(savedAt)}</p>
     <div class="settings-actions">
-      <button class="btn btn--ghost" data-action="export-data">导出备份</button>
-      <button class="btn btn--ghost" data-action="import-data">导入备份</button>
+      <button class="btn btn--ghost" data-action="export-data">导出记录</button>
+      <button class="btn btn--ghost" data-action="import-data">导入记录</button>
     </div>
   </section>
   <input type="file" accept="image/*" data-file="image" hidden>

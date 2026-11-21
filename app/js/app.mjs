@@ -668,17 +668,18 @@ async function handleFileInput(input) {
 // ---------------------------------------------------------------- 备份导出 / 导入
 
 function exportData() {
-  const text = JSON.stringify(state.data, null, 2);
+  const backup = M.buildRecordsBackup(state.data, new Date());
+  const text = JSON.stringify(backup, null, 2);
   const blob = new Blob([text], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `jlrc-backup-${M.toLocalDateTime().replace(/[:T]/g, '-')}.json`;
+  link.download = `jlrc-记录-${M.toLocalDateTime().replace(/[:T]/g, '-')}.json`;
   document.body.appendChild(link);
   link.click();
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 5000);
-  showToast('已导出备份');
+  showToast('已导出记录');
 }
 
 async function importFile(file) {
@@ -686,37 +687,43 @@ async function importFile(file) {
   try {
     parsed = JSON.parse(await file.text());
   } catch {
-    showToast('备份文件不是合法的 JSON', true);
+    showToast('文件不是合法的 JSON', true);
     return;
   }
-  const errors = M.validateData(parsed);
-  if (errors.length) {
-    showToast(`导入失败：${errors[0]}`, true);
+  const result = M.parseRecordsBackup(parsed);
+  if (!result.ok) {
+    showToast(result.errors[0], true);
     return;
   }
-  state.pendingImport = parsed;
+  state.pendingImport = { records: result.records, events: result.events };
   state.dialog = {
     kind: 'import',
-    text: `导入会覆盖现在所有记录（备份里有 ${parsed.records.length} 条状态记录、${parsed.events.length} 个大事件），并自动备份一份当前数据。确定继续吗？`,
+    text: `导入会用文件里的 ${result.records.length} 条状态记录、${result.events.length} 个大事件替换现在的记录；颜色、表情和背景保持不变。确定继续吗？`,
   };
   render();
 }
 
 async function confirmImport() {
-  const parsed = state.pendingImport;
-  if (!parsed) return;
+  const pending = state.pendingImport;
+  if (!pending) return;
+  const merged = {
+    ...structuredClone(state.data),
+    records: pending.records,
+    events: pending.events,
+    updatedAt: M.toLocalDateTime(new Date()),
+  };
   try {
     const response = await fetch('/api/import', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(parsed),
+      body: JSON.stringify(merged),
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error((payload.errors && payload.errors[0]) || '导入失败');
-    state.data = parsed;
+    state.data = merged;
     state.pendingImport = null;
     state.dialog = null;
-    showToast('已导入备份');
+    showToast('已导入记录');
   } catch (error) {
     showToast(`导入失败：${error.message}`, true);
   }
