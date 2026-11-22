@@ -162,6 +162,16 @@ test('大事件卡片：没有分数，显示 📌 与文字', () => {
   assert.doesNotMatch(html, /card__score/);
 });
 
+test('大事件卡片：换过图标后显示自定义图片', () => {
+  let data = M.createEmptyData(NOW);
+  data = M.addEvent(data, { text: '搬家', date: TODAY }, NOW);
+  data.settings.eventIcon = 'data:image/png;base64,AAAA';
+  const card = M.dayCards(data, TODAY)[0];
+  const html = renderCard(card, stateWith({ data }));
+  assert.match(html, /<img class="face-img" src="data:image\/png;base64,AAAA"/);
+  assert.doesNotMatch(html, /📌/);
+});
+
 test('卡片里的备注会被转义，不会破坏结构', () => {
   let data = M.createEmptyData(NOW);
   data = M.addRecord(data, { type: 'body', score: 3, note: '<b>腰疼</b> & "酸"', recordedAt: '2026-11-21T08:00' }, NOW);

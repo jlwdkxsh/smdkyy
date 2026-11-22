@@ -181,6 +181,7 @@ export function createEmptyData(now = new Date()) {
         color: DEFAULT_COLORS[index],
         image: null,
       })),
+      eventIcon: null,
       background: { ...DEFAULT_BACKGROUND },
       appearance: { ...DEFAULT_APPEARANCE },
     },
@@ -198,6 +199,7 @@ export function normalizeData(data) {
     settings: {
       ...settings,
       levels: settings.levels || [],
+      eventIcon: settings.eventIcon ?? null,
       background: { ...DEFAULT_BACKGROUND, ...(settings.background || {}) },
       appearance: { ...DEFAULT_APPEARANCE, ...(settings.appearance || {}) },
     },
@@ -662,8 +664,14 @@ export function validateData(data) {
     }
   }
 
-  const background = data.settings && data.settings.background;
-  if (background !== undefined) {
+  const eventIcon = data.settings && data.settings.eventIcon;
+  if (eventIcon !== null && eventIcon !== undefined) {
+    if (typeof eventIcon !== 'string' || !IMAGE_RE.test(eventIcon) || eventIcon.length > LIMITS.imageDataUrl) {
+      errors.push('设置损坏：大事件图标格式不正确');
+    }
+  }
+
+  const background = data.settings && data.settings.background;  if (background !== undefined) {
     if (!background || typeof background !== 'object' || !['solid', 'gradient', 'image'].includes(background.mode)) {
       errors.push('外观设置损坏：背景模式不正确');
     } else {

@@ -281,6 +281,7 @@ test('createEmptyData：包含默认外观设置', () => {
   const data = baseData();
   assert.deepEqual(data.settings.background, M.DEFAULT_BACKGROUND);
   assert.deepEqual(data.settings.appearance, M.DEFAULT_APPEARANCE);
+  assert.equal(data.settings.eventIcon, null);
   assert.equal(data.settings.background.mode, 'solid');
   assert.equal(data.settings.background.scrim, 30);
   assert.equal(data.settings.appearance.surfaceAlpha, 100);
@@ -290,9 +291,11 @@ test('normalizeData：补全旧数据里缺失的外观字段', () => {
   const old = baseData();
   delete old.settings.background;
   delete old.settings.appearance;
+  delete old.settings.eventIcon;
   const normalized = M.normalizeData(old);
   assert.deepEqual(normalized.settings.background, M.DEFAULT_BACKGROUND);
   assert.deepEqual(normalized.settings.appearance, M.DEFAULT_APPEARANCE);
+  assert.equal(normalized.settings.eventIcon, null);
   assert.equal(old.settings.background, undefined, '不修改原对象');
 
   const custom = baseData();
@@ -332,6 +335,14 @@ test('validateData：外观设置校验', () => {
   const badAlpha = baseData();
   badAlpha.settings.appearance = { surfaceAlpha: 120 };
   assert.match(M.validateData(badAlpha).join(), /透明度/);
+
+  const goodIcon = baseData();
+  goodIcon.settings.eventIcon = 'data:image/png;base64,AAAA';
+  assert.deepEqual(M.validateData(goodIcon), []);
+
+  const badIcon = baseData();
+  badIcon.settings.eventIcon = 'http://example.com/pin.png';
+  assert.match(M.validateData(badIcon).join(), /大事件图标/);
 
   const oldData = baseData();
   delete oldData.settings.background;

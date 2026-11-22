@@ -1400,6 +1400,47 @@ textarea {
   cursor: pointer;
 }
 
+.event-icon-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f1efea;
+}
+
+.event-icon-row__face {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #f3f2ee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  overflow: hidden;
+}
+
+.event-icon-row__face .face-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.event-icon-row__label {
+  font-size: 14px;
+}
+
+.event-icon-row__actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.event-icon-row__actions .setting-row__btn {
+  margin-left: 0;
+}
+
 .settings-note {
   margin: 10px 0 0;
   font-size: 12px;

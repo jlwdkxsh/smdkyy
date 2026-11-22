@@ -130,8 +130,10 @@ export function renderCard(card, state) {
   const more = `<button class="card__more" data-action="card-menu" data-kind="${card.kind}" data-id="${esc(card.id)}" aria-label="更多操作">⋯</button>`;
 
   if (card.kind === 'event') {
+    const icon = state.data.settings && state.data.settings.eventIcon;
+    const face = icon ? `<img class="face-img" src="${esc(icon)}" alt="">` : '📌';
     return `<article class="card card--event" data-id="${esc(card.id)}">
-    <div class="card__face" aria-hidden="true">📌</div>
+    <div class="card__face" aria-hidden="true">${face}</div>
     <div class="card__main" data-action="edit-card" data-kind="event" data-id="${esc(card.id)}">
       <div class="card__head"><span class="card__type">大事件</span></div>
       <p class="card__note">${esc(card.text)}</p>
@@ -521,6 +523,8 @@ export function renderSettingsPage(state) {
     ? `${M.formatShortDate(state.data.updatedAt.slice(0, 10), state.today)} ${state.data.updatedAt.slice(11, 16)}`
     : '—';
 
+  const eventIcon = (state.data.settings && state.data.settings.eventIcon) || null;
+
   return `<main class="page page--settings">
   <header class="page-head page-head--row">
     <button class="icon-btn" data-action="close-settings" aria-label="返回">←</button>
@@ -530,6 +534,14 @@ export function renderSettingsPage(state) {
   <section class="settings-block">
     <h2 class="section-title">分数 · 表情 · 颜色</h2>
     <ul class="setting-list">${rows}</ul>
+    <div class="event-icon-row">
+      <span class="event-icon-row__face">${eventIcon ? `<img class="face-img" src="${esc(eventIcon)}" alt="">` : '📌'}</span>
+      <span class="event-icon-row__label">大事件图标</span>
+      <span class="event-icon-row__actions">
+        <button class="setting-row__btn" data-action="change-event-icon">换图</button>
+        ${eventIcon ? '<button class="setting-row__btn" data-action="clear-event-icon">恢复默认</button>' : ''}
+      </span>
+    </div>
     <p class="settings-note">颜色点一下就能改，改完全站立刻生效。</p>
   </section>
   <section class="settings-block">
@@ -550,10 +562,11 @@ export function renderSettingsPage(state) {
 
 export function renderCropDialog(state) {
   const crop = state.crop;
+  const title = crop.target === 'event' ? '裁剪大事件图标' : `裁剪第 ${crop.score} 分的表情`;
   return `<div class="dialog-backdrop" data-action="cancel-crop"></div>
   <section class="crop-dialog" role="dialog" aria-modal="true" aria-label="裁剪表情">
     <header class="crop-dialog__head">
-      <h2>裁剪第 ${crop.score} 分的表情</h2>
+      <h2>${title}</h2>
       <button class="icon-btn" data-action="cancel-crop" aria-label="关闭">✕</button>
     </header>
     <canvas class="crop-canvas" width="256" height="256" data-crop-canvas></canvas>

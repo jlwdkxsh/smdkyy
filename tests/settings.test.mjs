@@ -151,6 +151,27 @@ test('设置页：图片模式显示选择图片与清除', () => {
   assert.match(html, /class="bg-image-thumb" style="background:url\(data:image\/jpeg;base64,AAAA\)/);
 });
 
+test('设置页：大事件图标可换图，设置后可恢复默认', () => {
+  const empty = renderSettingsPage(stateWith());
+  assert.match(empty, /data-action="change-event-icon">换图</);
+  assert.doesNotMatch(empty, /data-action="clear-event-icon"/);
+  assert.match(empty, /event-icon-row__label">大事件图标</);
+
+  const data = M.createEmptyData(NOW);
+  data.settings.eventIcon = 'data:image/png;base64,AAAA';
+  const html = renderSettingsPage(stateWith({ data }));
+  assert.match(html, /class="event-icon-row__face"><img class="face-img" src="data:image\/png;base64,AAAA"/);
+  assert.match(html, /data-action="clear-event-icon">恢复默认</);
+});
+
+test('裁剪弹层：大事件图标用单独标题', () => {
+  const html = renderCropDialog(
+    stateWith({ crop: { target: 'event', score: 1, src: 'data:image/png;base64,AAAA', zoom: 1, offsetX: 0, offsetY: 0 } }),
+  );
+  assert.match(html, /裁剪大事件图标/);
+  assert.doesNotMatch(html, /裁剪第 1 分/);
+});
+
 test('设置页：按钮颜色可调，文字颜色自动选深/浅', () => {
   const html = renderSettingsPage(stateWith());
   assert.match(html, /data-button-color/);

@@ -37,6 +37,7 @@ export const state = {
   dialog: null,
   dayMenu: null,
   crop: null,
+  cropTarget: 'level',
   cropScore: 1,
   pendingImport: null,
   info: null,
@@ -171,6 +172,14 @@ async function updateBackground(patch) {
 async function resetAppearance() {
   const next = M.resetAppearance(state.data, new Date());
   const ok = await persist(next, '已恢复默认外观');
+  if (ok) render();
+}
+
+async function updateEventIcon(image) {
+  const next = structuredClone(state.data);
+  next.settings.eventIcon = image;
+  next.updatedAt = M.toLocalDateTime(new Date());
+  const ok = await persist(next, image ? '大事件图标已更新' : '大事件图标已恢复默认');
   if (ok) render();
 }
 
@@ -662,13 +671,17 @@ async function applyCrop() {
     showToast('这张图太大了，换一张小一点的试试', true);
     return;
   }
-  const score = state.crop.score;
+  const crop = state.crop;
   const next = structuredClone(state.data);
-  const level = next.settings.levels.find((item) => item.score === score);
-  if (!level) return;
-  level.image = image;
+  if (crop.target === 'event') {
+    next.settings.eventIcon = image;
+  } else {
+    const level = next.settings.levels.find((item) => item.score === crop.score);
+    if (!level) return;
+    level.image = image;
+  }
   next.updatedAt = M.toLocalDateTime(new Date());
-  const ok = await persist(next, '表情已更新');
+  const ok = await persist(next, crop.target === 'event' ? '大事件图标已更新' : '表情已更新');
   if (ok) {
     state.crop = null;
     render();
@@ -695,7 +708,14 @@ async function handleFileInput(input) {
       const src = await readFileAsDataUrl(file);
       cropImage = null;
       cropImageSrc = '';
-      state.crop = { score: state.cropScore || 1, src, zoom: 1, offsetX: 0, offsetY: 0 };
+      state.crop = {
+        target: state.cropTarget || 'level',
+        score: state.cropScore || 1,
+        src,
+        zoom: 1,
+        offsetX: 0,
+        offsetY: 0,
+      };
       render();
     } catch (error) {
       showToast(error.message, true);
@@ -888,11 +908,21 @@ function handleAction(action, target) {
       break;
     }
     case 'change-image': {
+      state.cropTarget = 'level';
       state.cropScore = Number(target.dataset.score) || 1;
       const input = appEl.querySelector('[data-file="image"]');
       if (input) input.click();
       break;
     }
+    case 'change-event-icon': {
+      state.cropTarget = 'event';
+      const input = appEl.querySelector('[data-file="image"]');
+      if (input) input.click();
+      break;
+    }
+    case 'clear-event-icon':
+      updateEventIcon(null);
+      break;
     case 'cancel-crop':
       state.crop = null;
       render();
