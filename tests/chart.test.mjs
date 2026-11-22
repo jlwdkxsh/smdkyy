@@ -21,6 +21,32 @@ test('折线：两个点以上用三次贝塞尔平滑曲线，不再用折线',
   assert.doesNotMatch(svg, /<polyline/);
 });
 
+test('折线：时间靠得很近时也不会回环', () => {
+  const points = [
+    { minutes: 0, score: 5 },
+    { minutes: 600, score: 6 },
+    { minutes: 602, score: 7 },
+    { minutes: 604, score: 8 },
+  ];
+  const xOf = (minutes) => minutes;
+  const yOf = (score) => 100 - score * 10;
+  const d = smoothPath(points, xOf, yOf);
+  const segments = [...d.matchAll(/C ([\d.-]+) ([\d.-]+), ([\d.-]+) ([\d.-]+), ([\d.-]+) ([\d.-]+)/g)];
+  assert.equal(segments.length, 3);
+
+  segments.forEach((match, index) => {
+    const x1 = Number(match[1]);
+    const x2 = Number(match[3]);
+    const low = Math.min(points[index].minutes, points[index + 1].minutes);
+    const high = Math.max(points[index].minutes, points[index + 1].minutes);
+    assert.ok(x1 >= low - 0.01 && x1 <= high + 0.01, `控制点 1 横向越界：${x1}`);
+    assert.ok(x2 >= low - 0.01 && x2 <= high + 0.01, `控制点 2 横向越界：${x2}`);
+    // 控制点不得往回走，避免曲线打结
+    assert.ok(x1 >= points[index].minutes - 0.01, `控制点 1 回退：${x1}`);
+    assert.ok(x2 >= points[index].minutes - 0.01, `控制点 2 回退：${x2}`);
+  });
+});
+
 test('折线：控制点不会让曲线越过相邻两点的真实分数', () => {
   const points = [
     { minutes: 0, score: 5 },

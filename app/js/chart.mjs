@@ -15,7 +15,7 @@ function esc(value) {
   }[ch]));
 }
 
-/** 三次贝塞尔平滑；控制点的 y 夹在相邻两点之间，避免曲线越过真实分数 */
+/** 三次贝塞尔平滑；控制点被夹在相邻两点之间，曲线不会回环，也不会越过真实分数 */
 export function smoothPath(points, xOf, yOf) {
   if (points.length < 2) return '';
   const coords = points.map((point) => ({ x: xOf(point.minutes), y: yOf(point.score) }));
@@ -27,12 +27,14 @@ export function smoothPath(points, xOf, yOf) {
     const p1 = coords[index];
     const p2 = coords[index + 1];
     const p3 = coords[index + 2] || coords[index + 1];
-    const low = Math.min(p1.y, p2.y);
-    const high = Math.max(p1.y, p2.y);
-    const c1x = p1.x + (p2.x - p0.x) / 6;
-    const c1y = clamp(p1.y + (p2.y - p0.y) / 6, low, high);
-    const c2x = p2.x - (p3.x - p1.x) / 6;
-    const c2y = clamp(p2.y - (p3.y - p1.y) / 6, low, high);
+    const lowX = Math.min(p1.x, p2.x);
+    const highX = Math.max(p1.x, p2.x);
+    const lowY = Math.min(p1.y, p2.y);
+    const highY = Math.max(p1.y, p2.y);
+    const c1x = clamp(p1.x + (p2.x - p0.x) / 6, lowX, highX);
+    const c1y = clamp(p1.y + (p2.y - p0.y) / 6, lowY, highY);
+    const c2x = clamp(p2.x - (p3.x - p1.x) / 6, lowX, highX);
+    const c2y = clamp(p2.y - (p3.y - p1.y) / 6, lowY, highY);
     d += ` C ${c1x.toFixed(1)} ${c1y.toFixed(1)}, ${c2x.toFixed(1)} ${c2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
   }
   return d;
