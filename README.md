@@ -5,6 +5,13 @@
 
 数据只存在自己的电脑和手机里。没有账号，没有云，没有推送，没有社交。
 
+<p align="center">
+  <img src="docs/screenshots/today.png" width="240" alt="今日页：三个状态入口与当天曲线">
+  <img src="docs/screenshots/calendar.png" width="240" alt="日历：状态圆环与当天详情">
+  <img src="docs/screenshots/list.png" width="240" alt="列表：按天分组的记录">
+</p>
+<p align="center"><i>今日 · 日历 · 列表（手机端截图）</i></p>
+
 ## 为什么做
 
 我想记的东西很少：今天身体怎么样、精力够不够、心情如何，再加一句话。
