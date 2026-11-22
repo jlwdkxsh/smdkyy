@@ -264,7 +264,7 @@ export async function startServer(options = {}) {
 
   if (!quiet) {
     console.log('---------------------------------------------');
-    console.log(' 记录 App 已启动');
+    console.log(' 记录自己 已启动');
     console.log(` 地址：${url}`);
     console.log(` 数据：${dataFile}`);
     console.log(' 关闭这个窗口即可停止；数据已经保存，不会丢。');

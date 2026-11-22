@@ -690,7 +690,7 @@ async function handleFileInput(input) {
 async function exportData() {
   const backup = M.buildRecordsBackup(state.data, new Date());
   const text = JSON.stringify(backup, null, 2);
-  const name = `jlrc-记录-${M.toLocalDateTime().replace(/[:T]/g, '-')}.json`;
+  const name = `记录自己-${M.toLocalDateTime().replace(/[:T]/g, '-')}.json`;
 
   const capacitor = typeof window !== 'undefined' ? window.Capacitor : undefined;
   if (pickExportMode({ capacitor }) === 'share') {

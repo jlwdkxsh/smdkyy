@@ -24,7 +24,7 @@ test('随包 Node 运行时存在且可用', async () => {
 
 test('入口页面：标题、入口脚本、样式表都在', async () => {
   const html = await readFile(path.join(ROOT, 'app', 'index.html'), 'utf8');
-  assert.match(html, /<title>记录<\/title>/);
+  assert.match(html, /<title>记录自己<\/title>/);
   assert.match(html, /src="\/js\/app\.mjs"/);
   assert.match(html, /href="\/styles\.css"/);
   assert.match(html, /id="app"/);
