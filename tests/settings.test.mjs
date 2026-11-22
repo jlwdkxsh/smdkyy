@@ -155,6 +155,9 @@ test('设置页：按钮颜色可调，文字颜色自动选深/浅', () => {
   const html = renderSettingsPage(stateWith());
   assert.match(html, /data-button-color/);
   assert.match(html, /<input type="color" value="#2F6B4F" data-button-color>/);
+  // 提示文字单独成段，不再挤在颜色行里变成竖排
+  assert.match(html, /class="settings-note">按钮上的文字颜色会自动反色/);
+  assert.doesNotMatch(html, /range-field__value">文字自动反色/);
   assert.equal(textColorOn('#2F6B4F'), '#FFFFFF');
   assert.equal(textColorOn('#F5C518'), '#1F2328');
   assert.equal(textColorOn('nope'), '#FFFFFF');

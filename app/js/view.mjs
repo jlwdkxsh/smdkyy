@@ -491,8 +491,8 @@ function renderAppearanceBlock(state) {
     </div>
     <div class="bg-fields">
       <label class="color-field"><span>按钮颜色</span><input type="color" value="${esc(buttonColor)}" data-button-color></label>
-      <span class="range-field__value">文字自动反色</span>
     </div>
+    <p class="settings-note">按钮上的文字颜色会自动反色，不用手动调。</p>
     <div class="settings-actions">
       <button class="btn btn--ghost" data-action="reset-appearance">恢复默认外观</button>
     </div>
