@@ -92,7 +92,7 @@ export function renderToday(state) {
 
   return `<main class="page page--today">
   <header class="page-head page-head--today">
-    <h1 class="page-title">${M.formatShortDate(today, today)}</h1>
+    <h1 class="page-title">${M.formatShortDate(today)}</h1>
     <button class="today-add" data-action="add-record">＋ 记录</button>
   </header>
   <nav class="type-nav" role="tablist" aria-label="按状态查看">${nav}</nav>

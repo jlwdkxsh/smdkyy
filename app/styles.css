@@ -118,6 +118,11 @@ textarea {
   padding-right: 0;
 }
 
+.page-head--today .page-title {
+  white-space: nowrap;
+  font-size: clamp(16px, 4.6vw, 20px);
+}
+
 .today-add {
   flex: 0 0 auto;
   border: 1px solid var(--button-bg);

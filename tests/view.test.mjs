@@ -34,7 +34,8 @@ test('底部导航：顺序为 日历 / 今日 / 列表，今日默认高亮', (
 
 test('今日页：日期标题、三个入口、当前小页空状态、右上角记录按钮', () => {
   const html = renderToday(stateWith());
-  assert.match(html, /11月21日 周六 · 今天/);
+  assert.match(html, /11月21日 周六/);
+  assert.doesNotMatch(html, /· 今天<\/h1>/, '今日页标题不重复标注今天，避免窄屏换行');
   assert.equal((html.match(/class="type-nav__item/g) || []).length, 3);
   assert.equal((html.match(/class="chart-block"/g) || []).length, 1);
   assert.match(html, /今天还没有身体记录/);
