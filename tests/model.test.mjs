@@ -438,6 +438,21 @@ test('背景图上限：约 2MB（base64 2.8M 字符）', () => {
   assert.match(M.validateData(over).join(), /背景图/);
 });
 
+test('外观：按钮颜色默认值、校验与重置', () => {
+  assert.equal(M.DEFAULT_APPEARANCE.buttonColor, '#2F6B4F');
+
+  const data = baseData();
+  data.settings.appearance = { ...M.DEFAULT_APPEARANCE, buttonColor: '#7C3AED' };
+  assert.deepEqual(M.validateData(data), []);
+
+  const bad = baseData();
+  bad.settings.appearance = { ...M.DEFAULT_APPEARANCE, buttonColor: 'purple' };
+  assert.match(M.validateData(bad).join(), /按钮颜色/);
+
+  const reset = M.resetAppearance(data, NOW);
+  assert.equal(reset.settings.appearance.buttonColor, '#2F6B4F');
+});
+
 test('validateData：接受空数据，拒绝坏版本/坏档位/坏记录', () => {
   assert.deepEqual(M.validateData(baseData()), []);
   assert.match(M.validateData({ ...baseData(), version: 99 }).join(), /版本/);

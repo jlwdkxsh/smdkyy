@@ -2,7 +2,7 @@
 // 纯计算部分导出为函数，便于在 Node 里做单元测试；DOM 相关代码只在浏览器中执行。
 
 import * as M from './model.mjs';
-import { renderApp, backgroundCss } from './view.mjs';
+import { renderApp, backgroundCss, textColorOn } from './view.mjs';
 import {
   createServerStorage,
   createLocalStorage,
@@ -110,6 +110,11 @@ function applyAppearance() {
   const appearance = { ...M.DEFAULT_APPEARANCE, ...(state.data.settings.appearance || {}) };
   const alpha = Number.isFinite(appearance.surfaceAlpha) ? appearance.surfaceAlpha : 100;
   document.documentElement.style.setProperty('--surface-alpha', String(alpha / 100));
+  const buttonColor = /^#[0-9a-fA-F]{6}$/.test(String(appearance.buttonColor))
+    ? appearance.buttonColor
+    : M.DEFAULT_APPEARANCE.buttonColor;
+  document.documentElement.style.setProperty('--button-bg', buttonColor);
+  document.documentElement.style.setProperty('--button-text', textColorOn(buttonColor));
 }
 
 function applyRangeValue(range) {
@@ -167,6 +172,19 @@ async function resetAppearance() {
   const next = M.resetAppearance(state.data, new Date());
   const ok = await persist(next, '已恢复默认外观');
   if (ok) render();
+}
+
+async function updateButtonColor(color) {
+  if (!/^#[0-9a-fA-F]{6}$/.test(String(color))) return;
+  const next = structuredClone(state.data);
+  next.settings.appearance = {
+    ...M.DEFAULT_APPEARANCE,
+    ...(next.settings.appearance || {}),
+    buttonColor: color,
+  };
+  next.updatedAt = M.toLocalDateTime(new Date());
+  const ok = await persist(next);
+  if (ok) applyAppearance();
 }
 
 function nowClock() {
@@ -967,6 +985,11 @@ function bindEvents() {
     const bgAngle = event.target.closest('[data-bg-angle]');
     if (bgAngle) {
       updateBackground({ angle: bgAngle.value });
+      return;
+    }
+    const buttonColor = event.target.closest('[data-button-color]');
+    if (buttonColor) {
+      updateButtonColor(buttonColor.value);
       return;
     }
     const fileInput = event.target.closest('[data-file]');

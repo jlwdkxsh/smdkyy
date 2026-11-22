@@ -14,6 +14,8 @@
   --surface-alpha: 1;
   --scrim: 0;
   --surface: rgb(255 255 255 / var(--surface-alpha));
+  --button-bg: #2f6b4f;
+  --button-text: #ffffff;
 }
 
 * {
@@ -118,9 +120,9 @@ textarea {
 
 .today-add {
   flex: 0 0 auto;
-  border: 1px solid var(--accent);
-  background: var(--accent);
-  color: #fff;
+  border: 1px solid var(--button-bg);
+  background: var(--button-bg);
+  color: var(--button-text);
   border-radius: 999px;
   padding: 8px 16px;
   font-size: 13px;
@@ -429,8 +431,8 @@ textarea {
 }
 
 .btn--primary {
-  background: var(--accent);
-  color: #fff;
+  background: var(--button-bg);
+  color: var(--button-text);
   flex: 1;
   font-weight: 550;
 }

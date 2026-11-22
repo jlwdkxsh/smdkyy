@@ -50,6 +50,7 @@ export const DEFAULT_BACKGROUND = {
 
 export const DEFAULT_APPEARANCE = {
   surfaceAlpha: 100,
+  buttonColor: '#2F6B4F',
 };
 
 export const DATETIME_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
@@ -698,6 +699,9 @@ export function validateData(data) {
     const alpha = appearance && appearance.surfaceAlpha;
     if (alpha !== undefined && (!Number.isInteger(alpha) || alpha < 0 || alpha > 100)) {
       errors.push('外观设置损坏：透明度不正确');
+    }
+    if (appearance && appearance.buttonColor !== undefined && !COLOR_RE.test(String(appearance.buttonColor))) {
+      errors.push('外观设置损坏：按钮颜色不正确');
     }
   }
 

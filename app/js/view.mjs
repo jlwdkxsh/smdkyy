@@ -420,6 +420,17 @@ export function backgroundCss(background) {
   return bg.color;
 }
 
+/** 根据背景色亮度选择可读的文字颜色 */
+export function textColorOn(background) {
+  const hex = String(background || '').replace('#', '');
+  if (!/^[0-9a-fA-F]{6}$/.test(hex)) return '#FFFFFF';
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.62 ? '#1F2328' : '#FFFFFF';
+}
+
 function renderAppearanceBlock(state) {
   const bg = { ...M.DEFAULT_BACKGROUND, ...((state.data.settings && state.data.settings.background) || {}) };
 
@@ -457,6 +468,7 @@ function renderAppearanceBlock(state) {
   const appearance = { ...M.DEFAULT_APPEARANCE, ...((state.data.settings && state.data.settings.appearance) || {}) };
   const surfaceAlpha = Number.isInteger(appearance.surfaceAlpha) ? appearance.surfaceAlpha : 100;
   const scrim = Number.isInteger(bg.scrim) ? bg.scrim : 30;
+  const buttonColor = /^#[0-9a-fA-F]{6}$/.test(String(appearance.buttonColor)) ? appearance.buttonColor : M.DEFAULT_APPEARANCE.buttonColor;
 
   return `<section class="settings-block">
     <h2 class="section-title">外观</h2>
@@ -476,6 +488,10 @@ function renderAppearanceBlock(state) {
       </label>`
           : ''
       }
+    </div>
+    <div class="bg-fields">
+      <label class="color-field"><span>按钮颜色</span><input type="color" value="${esc(buttonColor)}" data-button-color></label>
+      <span class="range-field__value">文字自动反色</span>
     </div>
     <div class="settings-actions">
       <button class="btn btn--ghost" data-action="reset-appearance">恢复默认外观</button>

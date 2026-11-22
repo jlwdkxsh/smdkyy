@@ -4,7 +4,7 @@ import { mkdtemp, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import * as M from '../app/js/model.mjs';
-import { renderApp, renderSettingsPage, renderCropDialog, backgroundCss } from '../app/js/view.mjs';
+import { renderApp, renderSettingsPage, renderCropDialog, backgroundCss, textColorOn } from '../app/js/view.mjs';
 import { startServer } from '../server.mjs';
 
 const NOW = new Date(2026, 10, 21, 19, 30);
@@ -149,6 +149,16 @@ test('设置页：图片模式显示选择图片与清除', () => {
   assert.match(html, /data-action="bg-image"/);
   assert.match(html, /data-action="bg-clear">清除图片/);
   assert.match(html, /class="bg-image-thumb" style="background:url\(data:image\/jpeg;base64,AAAA\)/);
+});
+
+test('设置页：按钮颜色可调，文字颜色自动选深/浅', () => {
+  const html = renderSettingsPage(stateWith());
+  assert.match(html, /data-button-color/);
+  assert.match(html, /<input type="color" value="#2F6B4F" data-button-color>/);
+  assert.equal(textColorOn('#2F6B4F'), '#FFFFFF');
+  assert.equal(textColorOn('#F5C518'), '#1F2328');
+  assert.equal(textColorOn('nope'), '#FFFFFF');
+  assert.equal(textColorOn(), '#FFFFFF');
 });
 
 test('设置页：卡片透明度滑块，遮罩滑块只在图片模式出现', () => {
