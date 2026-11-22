@@ -1512,6 +1512,15 @@ textarea {
     padding: 10px 4px 8px;
   }
 
+  .chips {
+    gap: 6px;
+  }
+
+  .chip {
+    padding: 6px 9px;
+    font-size: 12px;
+  }
+
   .chart-block {
     padding: 10px 8px 4px;
   }
